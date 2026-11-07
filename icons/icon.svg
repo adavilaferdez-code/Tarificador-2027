@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E61D2B"/>
+      <stop offset="100%" stop-color="#990B15"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+
+  <!-- Subtle inner border -->
+  <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+
+  <!-- Calculator & Bottle Silhouette Graphic -->
+  <g filter="url(#shadow)" fill="#FFFFFF">
+    <!-- Bottle contour -->
+    <path d="M 236 100 L 276 100 L 276 130 C 276 142 284 152 296 160 C 314 172 324 194 324 220 L 324 350 C 324 374 306 394 282 396 L 230 396 C 206 394 188 374 188 350 L 188 220 C 188 194 198 172 216 160 C 228 152 236 142 236 130 Z" opacity="0.95"/>
+    
+    <!-- Bottle Cap -->
+    <rect x="230" y="84" width="52" height="18" rx="4" fill="#FFFFFF"/>
+    
+    <!-- Ribbon Wave -->
+    <path d="M 190 270 Q 256 300 322 260 L 322 280 Q 256 320 190 290 Z" fill="#E61D2B"/>
+  </g>
+
+  <!-- 2027 Typography -->
+  <text x="256" y="455" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">
+    2027 PRO
+  </text>
+</svg>

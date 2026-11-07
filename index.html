@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Tarificador Comercial Pro 2027</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="description" content="Tarificador Comercial y Comparador de Competencia Oficial 2027 para Hostelería HORECA y Alimentación Tradicional">
+  <meta name="theme-color" content="#E61D2B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tarificador 2027">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand-wrapper">
+        <div class="brand-logo-badge">TCP</div>
+        <div class="brand-info">
+          <h1>Tarificador Comercial Pro</h1>
+          <div class="tagline">Tarifa Oficial 2027 · HORECA & Alimentación</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Cambiar Modo Oscuro/Claro" aria-label="Cambiar tema">
+          <span id="theme-toggle-icon">🌙</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Channel & Options Bar -->
+    <div class="global-bar">
+      <div class="global-bar-inner">
+        <div class="channel-selector-wrapper">
+          <span class="channel-label">Canal / Tramo:</span>
+          <select id="global-channel-select" class="channel-select" aria-label="Selector de Canal y Tramo">
+            <!-- Dynamically populated from CHANNELS -->
+          </select>
+        </div>
+
+        <div class="global-switches">
+          <label class="switch-label" title="Incluir Punto Verde en el precio de caja y unidad">
+            <input type="checkbox" id="global-check-pv" class="switch-input">
+            <span>Punto Verde (PV)</span>
+          </label>
+          <label class="switch-label" title="Mostrar precios con IVA (21% refrescos / 10% aguas)">
+            <input type="checkbox" id="global-check-iva" class="switch-input">
+            <span>Con IVA</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation Tabs -->
+    <nav class="desktop-nav">
+      <div class="desktop-nav-inner">
+        <button class="nav-tab-btn active" data-tab="tab-calculator">
+          <span>🧮</span> Calculadora Bidireccional
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-comparator">
+          <span>⚔️</span> Comparador Albaranes ("Modo Cisneros")
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-orders">
+          <span>📋</span> Pedidos & Presupuestos
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-master">
+          <span>📊</span> Tabla Maestra 2027
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ====================================================================
+         MÓDULO 1: CALCULADORA BIDIRECCIONAL (TARIFICADOR)
+         ==================================================================== -->
+    <section id="tab-calculator" class="tab-panel active">
+      
+      <!-- Category Filter Pills -->
+      <div id="calc-category-bar" class="category-filter-bar">
+        <button class="cat-pill active" data-category="all">✨ Todos</button>
+        <button class="cat-pill" data-category="vidrio_vr">🍾 Vidrio VR</button>
+        <button class="cat-pill" data-category="latas">🥫 Latas</button>
+        <button class="cat-pill" data-category="pet">🧴 PET</button>
+        <button class="cat-pill" data-category="aguas">💧 Aguas</button>
+        <button class="cat-pill" data-category="mixers_energy">⚡ Energéticas / Mixers</button>
+      </div>
+
+      <!-- Real-time Search Bar -->
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="calc-search-input" class="search-input" placeholder="Buscar por nombre, formato o marca (ej. Coca-Cola, Fanta, 33 cl, Monster)...">
+        <button id="calc-search-clear" class="search-clear-btn" title="Limpiar búsqueda">✕</button>
+      </div>
+
+      <!-- Product Picker Carousel / Grid -->
+      <div id="calc-product-grid" class="product-selector-grid">
+        <!-- Rendered by calculator.js -->
+      </div>
+
+      <!-- Highlighted 4 Key Figures Grid -->
+      <div class="key-figures-grid">
+        <div class="key-card highlight-blue">
+          <span class="key-title">📦 1. Tarifa Base 2027</span>
+          <span id="key-tarifa-base" class="key-value">27,36 €</span>
+          <span class="key-subtext">Precio catálogo oficial</span>
+        </div>
+        <div class="key-card highlight-orange">
+          <span class="key-title">🏷️ 2. Descuento Aplicado</span>
+          <span id="key-discount" class="key-value">32,50%</span>
+          <span class="key-subtext">Canal / Tramo activo</span>
+        </div>
+        <div class="key-card highlight-red">
+          <span class="key-title">💰 3. Caja Final</span>
+          <span id="key-caja-final" class="key-value">18,47 €</span>
+          <span id="key-caja-subtext" class="key-subtext">Sin IVA · Sin PV</span>
+        </div>
+        <div class="key-card highlight-green">
+          <span class="key-title">🍾 4. Unidad Final</span>
+          <span id="key-unidad-final" class="key-value">0,770 €</span>
+          <span id="key-unidad-subtext" class="key-subtext">Por botella/lata</span>
+        </div>
+      </div>
+
+      <!-- Calculator Card (Bidirectional Engine) -->
+      <div class="calc-card">
+        <div class="calc-header">
+          <div class="calc-product-info">
+            <h2 id="calc-prod-name">Coca-Cola Regular VR 23,7 cl</h2>
+            <div class="calc-subtitle">
+              <span id="calc-prod-code" class="badge-format">VR01</span>
+              <span id="calc-prod-format">VR 23,7 cl</span>
+              <span>·</span>
+              <span id="calc-prod-units">24 uds/caja</span>
+              <span>·</span>
+              <span id="calc-prod-pv">0.024 € PV/caja</span>
+              <span>·</span>
+              <span id="calc-prod-iva">IVA 21%</span>
+            </div>
+          </div>
+          <div class="calc-quick-actions">
+            <button id="calc-btn-target16" class="btn btn-warning btn-sm" title="Fijar precio de caja a 16,00 € y recalcular descuento">
+              🎯 Igualar a 16,00 €
+            </button>
+            <button id="calc-btn-reset-t3" class="btn btn-secondary btn-sm" title="Restaurar descuento al Tramo 3 oficial">
+              🔄 Reset a Tramo 3
+            </button>
+            <button id="calc-btn-add-order" class="btn btn-primary btn-sm" title="Añadir esta caja al pedido actual">
+              🛒 Añadir al Pedido
+            </button>
+            <button id="calc-btn-compare" class="btn btn-secondary btn-sm" title="Añadir a la comparativa de la competencia">
+              ⚔️ Comparar en Albarán
+            </button>
+          </div>
+        </div>
+
+        <!-- Bidirectional Calculation Inputs Form -->
+        <div class="bidirectional-grid">
+          
+          <!-- Input 1: Descuento % -->
+          <div class="input-box">
+            <div class="input-label">
+              <span>% Descuento Comercial</span>
+              <span style="font-size: 0.72rem; color: var(--primary); font-weight: 800;">EDITABLE</span>
+            </div>
+            <div class="input-field-wrapper">
+              <input type="number" id="calc-input-discount" min="0" max="100" step="0.1" value="32.50">
+              <span class="input-unit">%</span>
+            </div>
+            <div class="input-slider-wrapper">
+              <input type="range" id="calc-slider-discount" class="range-slider" min="0" max="85" step="0.1" value="32.5">
+            </div>
+            <div class="quick-step-buttons">
+              <button class="step-btn calc-step-btn" data-delta="-5">-5%</button>
+              <button class="step-btn calc-step-btn" data-delta="-1">-1%</button>
+              <button class="step-btn calc-step-btn" data-delta="1">+1%</button>
+              <button class="step-btn calc-step-btn" data-delta="5">+5%</button>
+            </div>
+          </div>
+
+          <!-- Input 2: Precio Caja Objetivo (€) -->
+          <div class="input-box">
+            <div class="input-label">
+              <span>Precio Caja Objetivo</span>
+              <span style="font-size: 0.72rem; color: var(--success); font-weight: 800;">RECÁLCULO AUTO</span>
+            </div>
+            <div class="input-field-wrapper">
+              <input type="number" id="calc-input-box" min="0" step="0.01" value="18.47">
+              <span class="input-unit">€</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+              Escribe un precio objetivo (ej. 16,00) para calcular el % de descuento necesario.
+            </div>
+          </div>
+
+          <!-- Input 3: Precio Unidad Objetivo (€) -->
+          <div class="input-box">
+            <div class="input-label">
+              <span>Precio Unidad Objetivo</span>
+              <span style="font-size: 0.72rem; color: #3b82f6; font-weight: 800;">RECÁLCULO AUTO</span>
+            </div>
+            <div class="input-field-wrapper">
+              <input type="number" id="calc-input-unit" min="0" step="0.001" value="0.770">
+              <span class="input-unit">€</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+              Escribe el coste por botella/lata para calcular automáticamente la caja y el descuento.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sales Pitch Banner -->
+        <div id="calc-pitch-banner" class="sales-pitch-banner">
+          <span class="pitch-icon">💡</span>
+          <span id="calc-pitch-text">
+            VR 23,7 cl (+18,5% vs 200 ml competidor, casi 1 litro más por caja al mismo precio de consumición).
+          </span>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ====================================================================
+         MÓDULO 2: COMPARADOR DE FACTURAS VS. COMPETENCIA ("MODO CISNEROS")
+         ==================================================================== -->
+    <section id="tab-comparator" class="tab-panel">
+
+      <!-- Comparator Hero Header -->
+      <div class="comparator-hero">
+        <div class="comp-header-flex">
+          <div class="comp-title">
+            <h2>⚔️ Comparador de Facturas vs. Competencia</h2>
+            <p>Demuestra el ahorro real frente al albarán del cliente y el valor de los 23,7 cl (+18,5% más de producto).</p>
+          </div>
+          <div class="comp-actions-bar">
+            <button id="comp-btn-add-line" class="btn btn-primary btn-sm" title="Añadir producto a la comparativa">
+              ➕ Añadir Producto
+            </button>
+            <button id="comp-btn-example" class="btn btn-warning btn-sm" title="Cargar el caso real de albarán de la competencia">
+              ⚡ Cargar Ejemplo Albarán
+            </button>
+            <button id="comp-btn-subida6" class="btn btn-secondary btn-sm" title="Simular la subida del +6% de la competencia de noviembre">
+              📈 +6% Subida Competencia
+            </button>
+            <button id="comp-btn-whatsapp" class="btn btn-success btn-sm" title="Generar resumen listo para WhatsApp">
+              📲 Copiar para WhatsApp
+            </button>
+            <button id="comp-btn-clear" class="btn btn-secondary btn-sm" title="Vaciar todas las líneas">
+              🗑️ Vaciar
+            </button>
+          </div>
+        </div>
+
+        <!-- Envases / Fianzas Controls -->
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+            <input type="checkbox" id="comp-check-envases" checked class="switch-input">
+            <span>Incluir Fianza de Envases (4,80 €/caja VR 23,7 y 7,20 €/caja VR 30)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Comparison Lines Table -->
+      <div class="comparison-table-wrapper">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th style="text-align: center;">Nº Cajas</th>
+              <th>Precio Competencia</th>
+              <th>Nuestra Tarifa (Tramo Activo)</th>
+              <th>Diferencia / Ahorro</th>
+              <th style="text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="comp-table-body">
+            <!-- Rendered by comparator.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals Comparison Summary Card -->
+      <div class="comp-summary-card">
+        <div class="comp-summary-grid">
+          
+          <div class="summary-col">
+            <div class="col-label">🔴 Factura Competencia</div>
+            <div id="comp-total-comp-sin-iva" class="col-total" style="color: var(--danger);">108,85 €</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Con IVA & Envases: <strong id="comp-total-comp-con-iva">165,51 €</strong>
+            </div>
+          </div>
+
+          <div class="summary-col">
+            <div class="col-label">🟢 Nuestra Tarifa Oficial</div>
+            <div id="comp-total-our-sin-iva" class="col-total" style="color: var(--primary);">110,52 €</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Con IVA & Envases: <strong id="comp-total-our-con-iva">167,53 €</strong>
+            </div>
+          </div>
+
+          <div class="summary-col winner-col">
+            <div class="col-label">🏆 Balance & Ventaja Comercial</div>
+            <div id="comp-total-savings-sin-iva" class="col-total">+1,67 €</div>
+            <div id="comp-savings-percent" class="col-savings">+1,5% de ahorro</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Con IVA & Envases: <strong id="comp-total-savings-con-iva">+2,02 €</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="comp-savings-badge" class="sales-pitch-banner" style="margin-top: 16px;">
+          💡 Argumento de venta: Nuestro VR es de 23,7 cl frente al RET 200 ml de la competencia (+18,5% más de producto por botella, casi 1 litro más por caja al mismo precio de venta en barra).
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ====================================================================
+         MÓDULO 3: CREADOR DE PRESUPUESTOS Y PEDIDOS
+         ==================================================================== -->
+    <section id="tab-orders" class="tab-panel">
+      
+      <div class="order-layout">
+        
+        <!-- Left Column: Customer Form & Items -->
+        <div class="order-items-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: 1.25rem; font-weight: 800;">📝 Datos del Pedido / Cliente</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <button id="order-btn-example" class="btn btn-warning btn-sm" title="Cargar pedido de ejemplo de hostelería">⚡ Cargar Ejemplo</button>
+              <button id="order-btn-add-product" class="btn btn-primary btn-sm">➕ Añadir Producto</button>
+              <button id="order-btn-clear" class="btn btn-secondary btn-sm">🗑️ Vaciar</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Nombre del Bar / Local</label>
+              <input type="text" id="order-bar-name" class="search-input" style="padding: 10px 12px;" placeholder="Ej. Café Bar Central">
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Contacto / Cliente</label>
+              <input type="text" id="order-cust-name" class="search-input" style="padding: 10px 12px;" placeholder="Ej. Antonio Gómez">
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Teléfono WhatsApp</label>
+              <input type="text" id="order-phone" class="search-input" style="padding: 10px 12px;" placeholder="Ej. 612345678">
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Notas de Entrega</label>
+              <input type="text" id="order-notes" class="search-input" style="padding: 10px 12px;" placeholder="Ej. Entregar antes de las 12h">
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px;">
+            <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 12px;">Cajas Incluidas en el Pedido</h3>
+            
+            <div id="order-empty-state" style="text-align: center; padding: 30px; color: var(--text-muted);">
+              🛒 No hay productos añadidos en el pedido.<br>
+              <div style="margin-top: 14px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <button onclick="OrdersModule.loadExampleData()" class="btn btn-warning btn-sm">⚡ Cargar Pedido de Ejemplo</button>
+                <button onclick="OrdersModule.showAddProductModal()" class="btn btn-primary btn-sm">➕ Añadir Producto</button>
+              </div>
+            </div>
+
+            <div id="order-items-list">
+              <!-- Rendered by orders.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Receipt Breakdown & Actions -->
+        <div class="order-receipt-card">
+          <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">🧾 Resumen de Factura</h2>
+          
+          <div class="receipt-breakdown">
+            <div class="receipt-row">
+              <span>Total Cajas:</span>
+              <strong id="order-total-boxes">0 cajas</strong>
+            </div>
+            <div class="receipt-row">
+              <span>Base Imponible (Sin PV):</span>
+              <strong id="order-base-imponible">0,00 €</strong>
+            </div>
+            <div class="receipt-row">
+              <span>Punto Verde (PV):</span>
+              <strong id="order-total-pv">0,00 €</strong>
+            </div>
+            <div class="receipt-row">
+              <span>IVA 10% (Aguas):</span>
+              <strong id="order-iva-10">0,00 €</strong>
+            </div>
+            <div class="receipt-row">
+              <span>IVA 21% (Refrescos/Mixers):</span>
+              <strong id="order-iva-21">0,00 €</strong>
+            </div>
+            <div class="receipt-row total-row">
+              <span>TOTAL PEDIDO:</span>
+              <span id="order-grand-total" style="color: var(--primary);">0,00 €</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <button id="order-btn-whatsapp" class="btn btn-success" style="width: 100%;">
+              📲 Enviar Pedido por WhatsApp
+            </button>
+            <button id="order-btn-copy" class="btn btn-secondary" style="width: 100%;">
+              📋 Copiar Resumen al Portapapeles
+            </button>
+            <button id="order-btn-print" class="btn btn-secondary" style="width: 100%;">
+              🖨️ Imprimir / Guardar en PDF
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ====================================================================
+         MÓDULO 4: TABLA MAESTRA DE TARIFAS 2027
+         ==================================================================== -->
+    <section id="tab-master" class="tab-panel">
+      
+      <div class="master-table-card">
+        <div class="table-controls">
+          <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800;">📊 Tabla Maestra de Tarifas 2027</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);" id="master-row-count">48 productos cargados</p>
+          </div>
+          <button id="master-btn-export-csv" class="btn btn-secondary btn-sm" title="Descargar todos los precios en formato Excel/CSV">
+            📥 Exportar a CSV
+          </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div id="master-category-bar" class="category-filter-bar">
+          <button class="cat-pill active" data-category="all">✨ Todos</button>
+          <button class="cat-pill" data-category="vidrio_vr">🍾 Vidrio VR</button>
+          <button class="cat-pill" data-category="latas">🥫 Latas</button>
+          <button class="cat-pill" data-category="pet">🧴 PET</button>
+          <button class="cat-pill" data-category="aguas">💧 Aguas</button>
+          <button class="cat-pill" data-category="mixers_energy">⚡ Energéticas / Mixers</button>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="master-search-input" class="search-input" placeholder="Filtrar por nombre, formato o marca...">
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="master-th-sortable" data-sort="code">#</th>
+                <th class="master-th-sortable" data-sort="format">Formato</th>
+                <th class="master-th-sortable" data-sort="name">Producto / Marca</th>
+                <th class="master-th-sortable" data-sort="unitsPerBox" style="text-align: center;">Uds/Caja</th>
+                <th class="master-th-sortable" data-sort="tarifaBase" style="text-align: right;">Tarifa 2027</th>
+                <th class="master-th-sortable" data-sort="discount" style="text-align: right;">% Dcto Activo</th>
+                <th class="master-th-sortable" data-sort="netoCaja" style="text-align: right;">Neto Caja</th>
+                <th style="text-align: right;">Neto Ud</th>
+                <th style="text-align: right;">PV Caja</th>
+                <th style="text-align: right;">Neto+PV Caja</th>
+                <th style="text-align: right;">Neto+PV Ud</th>
+                <th style="text-align: center;">IVA</th>
+                <th style="text-align: center;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="master-table-body">
+              <!-- Rendered by master-table.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation (1-Hand Street Ergonomics) -->
+  <nav class="mobile-nav">
+    <button class="mobile-tab-btn active" data-tab="tab-calculator">
+      <span class="tab-icon">🧮</span>
+      <span class="tab-text">Tarificador</span>
+    </button>
+    <button class="mobile-tab-btn" data-tab="tab-comparator">
+      <span class="tab-icon">⚔️</span>
+      <span class="tab-text">Comparador</span>
+    </button>
+    <button class="mobile-tab-btn" data-tab="tab-orders">
+      <span class="tab-icon">📋</span>
+      <span class="tab-text">Pedidos</span>
+    </button>
+    <button class="mobile-tab-btn" data-tab="tab-master">
+      <span class="tab-icon">📊</span>
+      <span class="tab-text">Tarifas</span>
+    </button>
+  </nav>
+
+  <!-- Modal: Product Picker for Comparator / Orders -->
+  <div id="product-picker-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-picker-title">Seleccionar Producto para Comparativa</h3>
+        <button id="modal-picker-close" class="modal-close">✕</button>
+      </div>
+      <div style="padding: 12px 16px;">
+        <input type="text" id="modal-picker-search" class="search-input" placeholder="Buscar por nombre o formato...">
+      </div>
+      <div id="modal-picker-list" class="modal-body-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/products-data.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/comparator.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/master-table.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
