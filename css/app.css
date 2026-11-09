@@ -126,21 +126,33 @@ body {
   gap: 10px;
 }
 
-.brand-logo-img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: var(--radius-full);
+.brand-logo-badge {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #D91B28 0%, #8A0A13 100%);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 19px;
   box-shadow: 0 4px 14px rgba(217, 27, 40, 0.35);
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  transition: transform var(--transition-fast);
-  cursor: pointer;
-  background: #ffffff;
-  display: block;
+  letter-spacing: -0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
-.brand-logo-img:hover {
-  transform: scale(1.06);
+.brand-logo-img,
+.brand-wrapper img,
+.app-header img {
+  width: 44px !important;
+  height: 44px !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  display: block;
 }
 
 .brand-info h1 {
@@ -348,6 +360,7 @@ body {
 }
 
 .switch-input {
+  -webkit-appearance: none;
   appearance: none;
   width: 36px;
   height: 20px;
@@ -594,20 +607,6 @@ body {
   cursor: pointer;
   padding: 6px;
   display: none;
-}
-
-#modal-picker-search {
-  pointer-events: auto !important;
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  background: var(--bg-card);
-  color: var(--text-main);
-  border: 2px solid var(--border);
-}
-
-#modal-picker-search:focus {
-  border-color: var(--primary);
-  background: var(--bg-card);
 }
 
 /* Product Selection Carousel / Grid */
@@ -1937,386 +1936,6 @@ body {
   border-left: 4px solid var(--success);
   margin-top: 14px;
   line-height: 1.4;
-}
-
-/* ==========================================================================
-   EXECUTIVE SPLIT-SCREEN & DEAL CLOSURE PANEL (OPCIÓN A)
-   ========================================================================== */
-.presupuesto-split-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 860px) {
-  .presupuesto-split-grid {
-    grid-template-columns: 1.15fr 0.85fr;
-    align-items: start;
-  }
-}
-
-.split-col-left {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.split-col-right {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 860px) {
-  .split-col-right {
-    position: sticky;
-    top: 75px;
-  }
-}
-
-/* Deal Card (Executive Panel) */
-.deal-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 22px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border-top: 4px solid var(--primary);
-}
-
-.deal-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.deal-card-header h3 {
-  font-size: 1.05rem;
-  font-weight: 850;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Margin Gauge Meter */
-.margin-gauge-container {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 16px;
-  background: var(--bg-input);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-}
-
-.gauge-wheel-box {
-  position: relative;
-  width: 108px;
-  height: 108px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gauge-wheel-svg {
-  transform: rotate(-90deg);
-  width: 100%;
-  height: 100%;
-}
-
-.gauge-track {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 9;
-}
-
-.gauge-progress {
-  fill: none;
-  stroke: var(--success);
-  stroke-width: 9;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.4s ease, stroke 0.3s ease;
-}
-
-.gauge-center-text {
-  position: absolute;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.gauge-center-val {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: var(--text-main);
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-
-.gauge-center-sub {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.gauge-info-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.gauge-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.82rem;
-  padding-bottom: 4px;
-  border-bottom: 1px dashed var(--border);
-}
-
-.gauge-info-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.gauge-info-label {
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.gauge-info-val {
-  font-weight: 800;
-  color: var(--text-main);
-}
-
-/* Deal Gold Card (Annual Profit) */
-.deal-gold-card {
-  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 50%, #FDE68A 100%);
-  border: 1.5px solid #F59E0B;
-  border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  color: #78350F;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
-}
-
-[data-theme="dark"] .deal-gold-card {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #FDE68A;
-}
-
-.deal-gold-title {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.9;
-}
-
-.deal-gold-amount {
-  font-size: 2.1rem;
-  font-weight: 900;
-  line-height: 1.15;
-  margin: 4px 0 2px 0;
-  letter-spacing: -0.5px;
-  color: #92400E;
-}
-
-[data-theme="dark"] .deal-gold-amount {
-  color: #FCD34D;
-}
-
-.deal-gold-sub {
-  font-size: 0.78rem;
-  font-weight: 600;
-  opacity: 0.85;
-}
-
-/* Bottle Compare Infographic Card */
-.bottle-compare-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bottle-compare-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.bottle-card-col {
-  padding: 12px 10px;
-  border-radius: var(--radius-md);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.bottle-card-col.our-bottle {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1.5px solid var(--success);
-}
-
-.bottle-card-col.pirate-bottle {
-  background: var(--bg-input);
-  border: 1px dashed var(--border);
-  opacity: 0.85;
-}
-
-.bottle-visual-icon {
-  font-size: 34px;
-  margin-bottom: 2px;
-  line-height: 1;
-}
-
-.bottle-size-badge {
-  font-size: 0.92rem;
-  font-weight: 900;
-  margin-bottom: 2px;
-}
-
-.our-bottle .bottle-size-badge {
-  color: var(--success);
-}
-
-.bottle-desc {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.deal-action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* ==========================================================================
-   TOP VENTAS HOSTELERÍA · ACCESO RÁPIDO (OPCIÓN 1)
-   ========================================================================== */
-.top-ventas-container {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-sm);
-  border-left: 4px solid var(--primary);
-}
-
-.top-ventas-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.top-ventas-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.96rem;
-  font-weight: 850;
-  color: var(--text-main);
-}
-
-.top-ventas-hint {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-}
-
-.top-ventas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 10px;
-}
-
-.top-venta-btn {
-  background: var(--bg-input);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: left;
-  user-select: none;
-  position: relative;
-}
-
-.top-venta-btn:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.top-venta-btn.active {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: 0 0 0 2px var(--primary-glow);
-}
-
-.top-venta-btn .tv-title {
-  font-weight: 850;
-  font-size: 0.86rem;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.2;
-}
-
-.top-venta-btn .tv-meta {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.top-venta-btn .tv-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--border);
-}
-
-.top-venta-btn .tv-box-price {
-  font-weight: 900;
-  font-size: 0.98rem;
-  color: var(--primary);
-}
-
-.top-venta-btn .tv-unit-price {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-muted);
 }
 
 

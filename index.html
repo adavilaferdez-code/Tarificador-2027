@@ -581,7 +581,17 @@
 
         <!-- Right Column: Receipt Breakdown & Actions -->
         <div class="order-receipt-card">
-          <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px;">🧾 Resumen de Factura</h2>
+          <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 12px;">🧾 Resumen de Factura</h2>
+          
+          <!-- Direct iPad/Mobile IVA Toggle Bar inside Orders -->
+          <div class="order-iva-toggle-bar" style="display: flex; gap: 6px; margin-bottom: 16px; background: var(--bg-input); padding: 4px; border-radius: 8px; border: 1px solid var(--border);">
+            <button id="order-toggle-sin-iva" type="button" class="btn btn-sm" style="flex: 1; font-weight: 800; font-size: 0.85rem; padding: 8px 6px; border-radius: 6px;" onclick="AppState.setIncludeIVA(false)">
+              📦 Sin IVA
+            </button>
+            <button id="order-toggle-con-iva" type="button" class="btn btn-sm" style="flex: 1; font-weight: 800; font-size: 0.85rem; padding: 8px 6px; border-radius: 6px;" onclick="AppState.setIncludeIVA(true)">
+              🏛️ Con IVA
+            </button>
+          </div>
           
           <div class="receipt-breakdown">
             <div class="receipt-row">

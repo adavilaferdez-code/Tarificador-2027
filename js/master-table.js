@@ -200,7 +200,7 @@ const MasterTableModule = {
     const channelLabel = AppState.getChannelLabel();
 
     const headers = [
-      'Código', 'Producto', 'Formato', 'Categoría', 'Uds/Caja',
+      'Cód. CCEP', 'Ref Interna', 'Producto', 'Formato', 'Categoría', 'Uds/Caja',
       'Tarifa Base 2027 (€)', `Dcto ${channelLabel} (%)`, 'Neto Caja Sin PV (€)',
       'Neto Ud Sin PV (€)', 'PV Caja (€)', 'Neto Con PV Caja (€)', 'Neto Con PV Ud (€)', 'IVA (%)'
     ];
@@ -210,6 +210,7 @@ const MasterTableModule = {
       const res = PriceEngine.calculateProduct(p, discount);
 
       return [
+        `"${p.ccepCode || ''}"`,
         `"${p.code || ''}"`,
         `"${p.name}"`,
         `"${p.format}"`,

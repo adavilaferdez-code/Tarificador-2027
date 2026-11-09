@@ -155,6 +155,15 @@ const AppNavigation = {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
 
+    // Ensure freshly rendered on tab switch
+    if (tabId === 'tab-orders' && typeof OrdersModule !== 'undefined' && OrdersModule.render) {
+      OrdersModule.render();
+    } else if (tabId === 'tab-comparator' && typeof ComparatorModule !== 'undefined' && ComparatorModule.render) {
+      ComparatorModule.render();
+    } else if (tabId === 'tab-master' && typeof MasterTableModule !== 'undefined' && MasterTableModule.render) {
+      MasterTableModule.render();
+    }
+
     // Update hash
     window.location.hash = tabId;
     window.scrollTo({ top: 0, behavior: 'smooth' });

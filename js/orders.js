@@ -38,6 +38,8 @@ const OrdersModule = {
     this.iva10El = document.getElementById('order-iva-10');
     this.iva21El = document.getElementById('order-iva-21');
     this.grandTotalEl = document.getElementById('order-grand-total');
+    this.totalLabelEl = document.getElementById('order-total-label');
+    this.totalSubtextEl = document.getElementById('order-total-subtext');
 
     // Action buttons
     this.btnWhatsApp = document.getElementById('order-btn-whatsapp');
@@ -138,19 +140,53 @@ const OrdersModule = {
 
     if (title) title.textContent = 'Añadir Producto al Pedido';
     modal.style.display = 'flex';
+
+    const clearBtn = document.getElementById('modal-picker-search-clear');
+    if (clearBtn) clearBtn.style.display = 'none';
+
     if (search) {
       search.value = '';
-      search.focus();
+      setTimeout(() => {
+        try {
+          search.focus();
+        } catch(e) {}
+      }, 50);
     }
 
+    const normalizeText = (str) => {
+      return (str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[-_]/g, ' ')
+        .trim();
+    };
+
     const renderList = (query = '') => {
-      const q = query.toLowerCase();
-      const filtered = PRODUCTS_DB.filter(p => !q || p.name.toLowerCase().includes(q) || p.format.toLowerCase().includes(q));
+      const q = normalizeText(query);
+      const filtered = PRODUCTS_DB.filter(p => {
+        if (!q) return true;
+        const normName = normalizeText(p.name);
+        const normFormat = normalizeText(p.format);
+        const normBrand = normalizeText(p.brand || '');
+        const normCategory = normalizeText(p.category || '');
+        return normName.includes(q) || normFormat.includes(q) || normBrand.includes(q) || normCategory.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div style="padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            🔍 No hay productos que coincidan con "<strong>${query}</strong>"
+          </div>
+        `;
+        return;
+      }
 
       list.innerHTML = filtered.map(p => {
         const channel = AppState.getActiveChannel();
         const discount = (p.discounts && p.discounts[channel] !== undefined) ? p.discounts[channel] : (p.discounts?.t3 || 0);
-        const res = PriceEngine.calculateProduct(p, discount);
+        const options = AppState.getOptions();
+        const res = PriceEngine.calculateProduct(p, discount, options);
 
         return `
           <div class="modal-product-item" data-id="${p.id}">
@@ -159,8 +195,8 @@ const OrdersModule = {
               <div style="font-size: 0.75rem; color: var(--text-muted);">${p.format} · ${p.unitsPerBox} uds/caja</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-weight: 800; color: var(--primary);">${PriceEngine.formatCurrency(res.netoCajaSinPV)}</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">Dcto ${discount.toFixed(1)}%</div>
+              <div style="font-weight: 800; color: var(--primary);">${PriceEngine.formatCurrency(res.finalCaja)}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">${PriceEngine.formatUnitCurrency(res.finalUd)}/ud · Dcto ${discount.toFixed(1)}%</div>
             </div>
           </div>
         `;
@@ -181,10 +217,28 @@ const OrdersModule = {
       });
     };
 
-    renderList();
+    renderList('');
+
+    const onSearchChange = (e) => {
+      const val = (e && e.target) ? e.target.value : (search ? search.value : '');
+      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+      renderList(val);
+    };
 
     if (search) {
-      search.oninput = (e) => renderList(e.target.value);
+      search.oninput = onSearchChange;
+      search.onkeyup = onSearchChange;
+    }
+
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        if (search) {
+          search.value = '';
+          search.focus();
+        }
+        clearBtn.style.display = 'none';
+        renderList('');
+      };
     }
 
     if (closeBtn) {
@@ -196,8 +250,8 @@ const OrdersModule = {
     };
   },
 
-  addProductToOrder(product, discountPercent, boxes = 1) {
-    const existing = this.items.find(i => i.productId === product.id);
+  addProductToOrder(product, discountPercent, boxes = 1, bonification = null) {
+    const existing = this.items.find(i => i.productId === product.id && JSON.stringify(i.bonification || null) === JSON.stringify(bonification || null));
     if (existing) {
       existing.boxes += boxes;
       existing.discount = discountPercent;
@@ -205,7 +259,8 @@ const OrdersModule = {
       this.items.push({
         productId: product.id,
         boxes: boxes,
-        discount: discountPercent
+        discount: discountPercent,
+        bonification: bonification
       });
     }
 
@@ -256,11 +311,26 @@ const OrdersModule = {
 
     if (this.emptyState) this.emptyState.style.display = 'none';
 
-    let totalBoxes = 0;
+    // Synchronize dedicated proposal IVA buttons
+    const toggleSinIVA = document.getElementById('order-toggle-sin-iva');
+    const toggleConIVA = document.getElementById('order-toggle-con-iva');
+    if (toggleSinIVA && toggleConIVA) {
+      if (options.includeIVA) {
+        toggleConIVA.className = 'btn btn-primary btn-sm';
+        toggleSinIVA.className = 'btn btn-secondary btn-sm';
+      } else {
+        toggleSinIVA.className = 'btn btn-primary btn-sm';
+        toggleConIVA.className = 'btn btn-secondary btn-sm';
+      }
+    }
+
+    let totalBoxesBilled = 0;
+    let totalBoxesDelivered = 0;
     let baseImponible = 0;
     let totalPV = 0;
     let iva10Total = 0;
     let iva21Total = 0;
+    let totalGiftValue = 0;
 
     const options = AppState.getOptions();
 
@@ -268,33 +338,76 @@ const OrdersModule = {
       const product = PRODUCTS_DB.find(p => p.id === item.productId);
       if (!product) return '';
 
-      totalBoxes += item.boxes;
+      totalBoxesBilled += item.boxes;
+      let freeBoxes = 0;
+      let bonifBadge = '';
 
-      const calc = PriceEngine.calculateProduct(product, item.discount, { includePV: false, includeIVA: false });
-      const lineBase = calc.netoCajaSinPV * item.boxes;
-      const linePV = product.pvCaja * item.boxes;
+      if (item.bonification) {
+        if (item.bonification.type === 'promo') {
+          freeBoxes = item.bonification.free || 0;
+          bonifBadge = `<span style="background: var(--success-bg); color: var(--success-text); font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-left: 6px;">🎁 +${freeBoxes} GRATIS (${item.bonification.label})</span>`;
+        } else if (item.bonification.type === 'rappel') {
+          bonifBadge = `<span style="background: rgba(59, 130, 246, 0.15); color: #2563eb; font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-left: 6px;">💶 ${item.bonification.label}</span>`;
+        }
+      }
+
+      totalBoxesDelivered += item.boxes + freeBoxes;
+
+      const calc = PriceEngine.calculateProduct(product, item.discount, options);
+      
+      let lineBase = calc.netoCajaSinPV * item.boxes;
+      if (item.bonification && item.bonification.type === 'rappel') {
+        const rappelTotal = (item.bonification.rappel || 0) * item.boxes;
+        lineBase = Math.max(0, lineBase - rappelTotal);
+        totalGiftValue += rappelTotal;
+      }
+
+      const linePV = product.pvCaja * (item.boxes + freeBoxes);
+
+      if (freeBoxes > 0) {
+        totalGiftValue += freeBoxes * calc.netoCajaSinPV;
+      }
 
       baseImponible += lineBase;
       totalPV += linePV;
 
       const lineTotalSinIVA = lineBase + (options.includePV ? linePV : 0);
+      const lineTax = lineTotalSinIVA * (product.iva / 100);
       if (product.iva === 10) {
-        iva10Total += lineTotalSinIVA * 0.10;
+        iva10Total += lineTax;
       } else {
-        iva21Total += lineTotalSinIVA * 0.21;
+        iva21Total += lineTax;
       }
+
+      // Live prices for box and unit honoring user's global toggles (Con IVA / Con Punto Verde)
+      const displayBoxPrice = calc.finalCaja;
+      const displayUdPrice = calc.finalUd;
+
+      // Effective price with free boxes
+      const lineDisplayTotal = options.includeIVA ? (lineTotalSinIVA + lineTax) : lineTotalSinIVA;
+      const effectiveBox = (item.boxes + freeBoxes > 0) ? (lineDisplayTotal / (item.boxes + freeBoxes)) : displayBoxPrice;
+
+      // Status indicator tags
+      const taxTag = options.includeIVA ? 'con IVA' : 'sin IVA';
+      const pvTag = options.includePV ? '+PV' : '';
+      const optionTags = [pvTag, taxTag].filter(Boolean).join(' · ');
 
       return `
         <div class="order-line-item">
           <div style="flex: 1;">
-            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">${product.name}</div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+              ${product.name}
+              ${bonifBadge}
+            </div>
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
               ${product.format} · Tarifa: ${PriceEngine.formatCurrency(product.tarifaBase)} · Dcto: 
               <input type="number" step="0.5" min="0" max="100" class="comp-input" style="width: 55px; padding: 2px 4px; font-size: 0.8rem;" 
                 value="${item.discount.toFixed(1)}" onchange="OrdersModule.updateDiscount(${index}, this.value)">%
             </div>
-            <div style="font-size: 0.78rem; color: var(--primary); font-weight: 700; margin-top: 3px;">
-              ${PriceEngine.formatCurrency(calc.netoCajaSinPV)}/caja (${PriceEngine.formatUnitCurrency(calc.netoUdSinPV)}/ud)
+            <div style="font-size: 0.8rem; color: var(--primary); font-weight: 700; margin-top: 3px;">
+              ${PriceEngine.formatCurrency(displayBoxPrice)}/caja (${PriceEngine.formatUnitCurrency(displayUdPrice)}/ud)
+              ${freeBoxes > 0 ? `· <span style="color: var(--success); font-weight: 800;">Efectivo regalo: ${PriceEngine.formatCurrency(effectiveBox)}/caja</span>` : ''}
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-left: 4px;">(${optionTags})</span>
             </div>
           </div>
 
@@ -304,12 +417,15 @@ const OrdersModule = {
             <button class="qty-btn" onclick="OrdersModule.updateQuantity(${index}, 1)">+</button>
           </div>
 
-          <div style="text-align: right; min-width: 80px;">
+          <div style="text-align: right; min-width: 85px;">
             <div style="font-weight: 900; font-size: 1.05rem; color: var(--text-main);">
-              ${PriceEngine.formatCurrency(lineBase)}
+              ${PriceEngine.formatCurrency(lineDisplayTotal)}
+            </div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);">
+              ${options.includeIVA ? 'Total con IVA' : 'Subtotal neto'}
             </div>
             <button class="action-icon-btn" style="width: 24px; height: 24px; font-size: 12px; margin-left: auto; margin-top: 4px; color: var(--danger);" 
-              onclick="OrdersModule.removeItem(${index})">
+              onclick="OrdersModule.removeItem(${index})" title="Eliminar producto">
               ✕
             </button>
           </div>
@@ -317,20 +433,35 @@ const OrdersModule = {
       `;
     }).join('');
 
-    this.updateTotals(totalBoxes, baseImponible, totalPV, iva10Total, iva21Total);
+    this.updateTotals(totalBoxesBilled, totalBoxesDelivered, baseImponible, totalPV, iva10Total, iva21Total, totalGiftValue);
   },
 
-  updateTotals(totalBoxes, baseImponible, totalPV, iva10, iva21) {
+  updateTotals(totalBoxesBilled, totalBoxesDelivered, baseImponible, totalPV, iva10, iva21, totalGiftValue = 0) {
     const options = AppState.getOptions();
     const subtotalWithPV = baseImponible + (options.includePV ? totalPV : 0);
     const grandTotal = subtotalWithPV + iva10 + iva21;
 
-    if (this.totalBoxesEl) this.totalBoxesEl.textContent = `${totalBoxes} cajas`;
+    if (this.totalBoxesEl) {
+      if (totalBoxesDelivered > totalBoxesBilled) {
+        this.totalBoxesEl.innerHTML = `<strong>${totalBoxesBilled} cajas cobradas</strong> <span style="color: var(--success); font-size: 0.78rem;">(${totalBoxesDelivered} entregadas con regalo)</span>`;
+      } else {
+        this.totalBoxesEl.textContent = `${totalBoxesBilled} cajas`;
+      }
+    }
     if (this.baseImponibleEl) this.baseImponibleEl.textContent = PriceEngine.formatCurrency(baseImponible);
     if (this.totalPVEl) this.totalPVEl.textContent = PriceEngine.formatCurrency(totalPV);
     if (this.iva10El) this.iva10El.textContent = PriceEngine.formatCurrency(iva10);
     if (this.iva21El) this.iva21El.textContent = PriceEngine.formatCurrency(iva21);
-    if (this.grandTotalEl) this.grandTotalEl.textContent = PriceEngine.formatCurrency(grandTotal);
+
+    if (options.includeIVA) {
+      if (this.totalLabelEl) this.totalLabelEl.textContent = 'TOTAL FACTURA (Con IVA):';
+      if (this.grandTotalEl) this.grandTotalEl.textContent = PriceEngine.formatCurrency(grandTotal);
+      if (this.totalSubtextEl) this.totalSubtextEl.textContent = `Base + PV: ${PriceEngine.formatCurrency(subtotalWithPV)} · IVA total: ${PriceEngine.formatCurrency(iva10 + iva21)}`;
+    } else {
+      if (this.totalLabelEl) this.totalLabelEl.textContent = 'TOTAL PEDIDO (Sin IVA):';
+      if (this.grandTotalEl) this.grandTotalEl.textContent = PriceEngine.formatCurrency(subtotalWithPV);
+      if (this.totalSubtextEl) this.totalSubtextEl.textContent = `Total estimado con IVA: ${PriceEngine.formatCurrency(grandTotal)}`;
+    }
   },
 
   generateOrderText() {
@@ -345,44 +476,80 @@ const OrdersModule = {
     text += `🏷️ *Canal / Tramo:* ${channelLabel}\n`;
     text += `------------------------------------\n\n`;
 
-    let totalBoxes = 0;
+    let totalBoxesBilled = 0;
+    let totalBoxesDelivered = 0;
     let baseTotal = 0;
     let pvTotal = 0;
     let ivaTotal = 0;
+    let totalGifts = 0;
 
     this.items.forEach(item => {
       const product = PRODUCTS_DB.find(p => p.id === item.productId);
       if (!product) return;
 
-      totalBoxes += item.boxes;
-      const calc = PriceEngine.calculateProduct(product, item.discount);
-      const lineBase = calc.netoCajaSinPV * item.boxes;
-      const linePV = product.pvCaja * item.boxes;
+      totalBoxesBilled += item.boxes;
+      let freeBoxes = 0;
+      let bonifTag = '';
+
+      if (item.bonification) {
+        if (item.bonification.type === 'promo') {
+          freeBoxes = item.bonification.free || 0;
+          bonifTag = ` (+${freeBoxes} GRATIS 🎁)`;
+        } else if (item.bonification.type === 'rappel') {
+          bonifTag = ` (💶 ${item.bonification.label})`;
+        }
+      }
+
+      totalBoxesDelivered += item.boxes + freeBoxes;
+
+      const calc = PriceEngine.calculateProduct(product, item.discount, options);
+      let lineBase = calc.netoCajaSinPV * item.boxes;
+      if (item.bonification && item.bonification.type === 'rappel') {
+        lineBase = Math.max(0, lineBase - (item.bonification.rappel * item.boxes));
+      }
+
+      const linePV = product.pvCaja * (item.boxes + freeBoxes);
       baseTotal += lineBase;
       pvTotal += linePV;
 
       const lineTax = (lineBase + (options.includePV ? linePV : 0)) * (product.iva / 100);
       ivaTotal += lineTax;
 
-      text += `▫️ *${item.boxes}x* ${product.name}\n`;
-      text += `   ${calc.netoCajaSinPV.toFixed(2)}€/caja (Dcto ${item.discount.toFixed(1)}%) -> *${lineBase.toFixed(2)}€*\n`;
+      const lineDisplayAmount = options.includeIVA ? (lineBase + (options.includePV ? linePV : 0) + lineTax) : lineBase;
+      const effectiveBox = (item.boxes + freeBoxes > 0) ? (lineDisplayAmount / (item.boxes + freeBoxes)) : calc.finalCaja;
+
+      text += `▫️ *${item.boxes}x*${bonifTag} ${product.name}\n`;
+      text += `   ${calc.finalCaja.toFixed(2)}€/caja (${calc.finalUd.toFixed(3)}€/ud ${options.includeIVA ? 'con IVA' : 'sin IVA'}) -> *${lineDisplayAmount.toFixed(2)}€*`;
+      if (freeBoxes > 0) {
+        text += `\n   👉 *Coste efectivo con regalo: ${effectiveBox.toFixed(2)}€/caja*`;
+        totalGifts += freeBoxes;
+      }
+      text += `\n\n`;
     });
 
     const finalTotal = baseTotal + (options.includePV ? pvTotal : 0) + ivaTotal;
+    const netTotal = baseTotal + (options.includePV ? pvTotal : 0);
 
-    text += `\n------------------------------------\n`;
-    text += `📦 *Total Cajas:* ${totalBoxes}\n`;
+    text += `------------------------------------\n`;
+    text += `📦 *Cajas Cobradas:* ${totalBoxesBilled}\n`;
+    if (totalGifts > 0) {
+      text += `🎁 *Cajas Bonificadas:* +${totalGifts} GRATIS (Total: ${totalBoxesDelivered} cajas)\n`;
+    }
     text += `💵 *Base Imponible:* ${baseTotal.toFixed(2)} €\n`;
     if (options.includePV) {
       text += `♻️ *Punto Verde:* ${pvTotal.toFixed(2)} €\n`;
     }
     text += `🏛️ *IVA:* ${ivaTotal.toFixed(2)} €\n`;
-    text += `💰 *TOTAL PEDIDO:* *${finalTotal.toFixed(2)} €*\n`;
+    if (options.includeIVA) {
+      text += `💰 *TOTAL FACTURA (CON IVA):* *${finalTotal.toFixed(2)} €*\n`;
+    } else {
+      text += `💰 *TOTAL PEDIDO (SIN IVA):* *${netTotal.toFixed(2)} €* (Total con IVA: ${finalTotal.toFixed(2)} €)\n`;
+    }
 
     if (this.customer.notes) {
       text += `\n📝 *Observaciones:* ${this.customer.notes}\n`;
     }
-    text += `\n_Generado por Tarificador Comercial Pro 2027_`;
+    text += `\n_Generado con Presupuesto 2027 Pro · Plataforma Comercial Oficial_`;
 
     return text;
   },
