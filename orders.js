@@ -296,6 +296,20 @@ const OrdersModule = {
 
   render() {
     if (!this.container) return;
+    const options = AppState.getOptions();
+
+    // Synchronize dedicated proposal IVA buttons
+    const toggleSinIVA = document.getElementById('order-toggle-sin-iva');
+    const toggleConIVA = document.getElementById('order-toggle-con-iva');
+    if (toggleSinIVA && toggleConIVA) {
+      if (options.includeIVA) {
+        toggleConIVA.className = 'btn btn-primary btn-sm';
+        toggleSinIVA.className = 'btn btn-secondary btn-sm';
+      } else {
+        toggleSinIVA.className = 'btn btn-primary btn-sm';
+        toggleConIVA.className = 'btn btn-secondary btn-sm';
+      }
+    }
 
     if (this.customerNameInput) this.customerNameInput.value = this.customer.name || '';
     if (this.barNameInput) this.barNameInput.value = this.customer.barName || '';
@@ -318,8 +332,6 @@ const OrdersModule = {
     let iva10Total = 0;
     let iva21Total = 0;
     let totalGiftValue = 0;
-
-    const options = AppState.getOptions();
 
     this.container.innerHTML = this.items.map((item, index) => {
       const product = PRODUCTS_DB.find(p => p.id === item.productId);
