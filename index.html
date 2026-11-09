@@ -15,8 +15,22 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="apple-touch-icon" href="icons/icon.svg">
 
+  <!-- Theme Enforcement: Always default to luminous executive light mode -->
+  <script>
+    try {
+      if (!localStorage.getItem('presupuesto_pro_theme')) {
+        localStorage.removeItem('tarificador_theme');
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('presupuesto_pro_theme'));
+      }
+    } catch(e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  </script>
+
   <!-- Styles -->
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/app.css?v=2027.14">
 </head>
 <body>
 
@@ -24,7 +38,7 @@
   <header class="app-header">
     <div class="header-top">
       <div class="brand-wrapper">
-        <div class="brand-logo-badge" title="Presupuesto 2027">P27</div>
+        <img src="icons/coca-cola-logo.png" alt="Coca-Cola Oficial" class="brand-logo-img" title="Coca-Cola · Presupuesto 2027 Pro">
         <div class="brand-info">
           <div style="display: flex; align-items: center; gap: 8px;">
             <h1>Presupuesto 2027</h1>
@@ -102,312 +116,306 @@
         </div>
       </div>
       
-      <!-- Category Filter Pills -->
-      <div id="calc-category-bar" class="category-filter-bar">
-        <button class="cat-pill active" data-category="all">✨ Todos</button>
-        <button class="cat-pill" data-category="vidrio_vr">🍾 Vidrio VR</button>
-        <button class="cat-pill" data-category="latas">🥫 Latas</button>
-        <button class="cat-pill" data-category="pet">🧴 PET</button>
-        <button class="cat-pill" data-category="aguas">💧 Aguas</button>
-        <button class="cat-pill" data-category="mixers_energy">⚡ Energéticas / Mixers</button>
-      </div>
 
-      <!-- Real-time Search Bar -->
-      <div class="search-wrapper">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="calc-search-input" class="search-input" placeholder="Buscar por nombre, formato o marca (ej. Coca-Cola, Fanta, 33 cl, Monster)...">
-        <button id="calc-search-clear" class="search-clear-btn" title="Limpiar búsqueda">✕</button>
-      </div>
 
-      <!-- Product Picker Carousel / Grid -->
-      <div id="calc-product-grid" class="product-selector-grid">
-        <!-- Rendered by calculator.js -->
-      </div>
-
-      <!-- Highlighted 4 Key Figures Grid -->
-      <div class="key-figures-grid">
-        <div class="key-card highlight-blue">
-          <span class="key-title">📦 1. Tarifa Base 2027</span>
-          <span id="key-tarifa-base" class="key-value">27,36 €</span>
-          <span class="key-subtext">Precio catálogo oficial</span>
+      <!-- TOP VENTAS / ACCESO RÁPIDO HOSTELERÍA (OPCIÓN 1) -->
+      <div class="top-ventas-container">
+        <div class="top-ventas-header">
+          <div class="top-ventas-title">
+            <span>⭐</span>
+            <strong>Top Ventas Hostelería · Acceso Rápido</strong>
+          </div>
+          <span class="top-ventas-hint">Toca un producto para cargarlo y negociar al instante:</span>
         </div>
-        <div class="key-card highlight-orange">
-          <span class="key-title">🏷️ 2. Descuento Aplicado</span>
-          <span id="key-discount" class="key-value">32,50%</span>
-          <span class="key-subtext">Canal / Tramo activo</span>
-        </div>
-        <div class="key-card highlight-red">
-          <span class="key-title">💰 3. Caja Final</span>
-          <span id="key-caja-final" class="key-value">18,47 €</span>
-          <span id="key-caja-subtext" class="key-subtext">Sin IVA · Sin PV</span>
-        </div>
-        <div class="key-card highlight-green">
-          <span class="key-title">🍾 4. Unidad Final</span>
-          <span id="key-unidad-final" class="key-value">0,770 €</span>
-          <span id="key-unidad-subtext" class="key-subtext">Por botella/lata</span>
+        <div id="top-ventas-grid" class="top-ventas-grid">
+          <!-- Rendered dynamically by calculator.js -->
         </div>
       </div>
 
-      <!-- Calculator Card (Bidirectional Engine) -->
-      <div class="calc-card">
-        <div class="calc-header">
-          <div class="calc-product-info">
-            <h2 id="calc-prod-name">Coca-Cola Regular VR 23,7 cl</h2>
-            <div class="calc-subtitle">
-              <span id="calc-prod-code" class="badge-format">VR01</span>
-              <span id="calc-prod-format">VR 23,7 cl</span>
-              <span>·</span>
-              <span id="calc-prod-units">24 uds/caja</span>
-              <span>·</span>
-              <span id="calc-prod-pv">0.024 € PV/caja</span>
-              <span>·</span>
-              <span id="calc-prod-iva">IVA 21%</span>
-            </div>
-          </div>
-          <div class="calc-quick-actions">
-            <button id="calc-btn-target16" class="btn btn-warning btn-sm" title="Fijar precio de caja a 16,00 € y recalcular descuento">
-              🎯 Igualar a 16,00 €
-            </button>
-            <button id="calc-btn-reset-t3" class="btn btn-secondary btn-sm" title="Restaurar descuento al Tramo 3 oficial">
-              🔄 Reset a Tramo 3
-            </button>
-            <button id="calc-btn-add-order" class="btn btn-primary btn-sm" title="Añadir esta caja al pedido actual">
-              🛒 Añadir al Pedido
-            </button>
-            <button id="calc-btn-compare" class="btn btn-secondary btn-sm" title="Añadir a la comparativa de la competencia">
-              ⚔️ Comparar en Albarán
-            </button>
-          </div>
-        </div>
-
-        <!-- Bidirectional Calculation Inputs Form -->
-        <div class="bidirectional-grid">
-          
-          <!-- Input 1: Descuento % -->
-          <div class="input-box">
-            <div class="input-label">
-              <span>% Descuento Comercial</span>
-              <span style="font-size: 0.72rem; color: var(--primary); font-weight: 800;">EDITABLE</span>
-            </div>
-            <div class="input-field-wrapper">
-              <input type="number" id="calc-input-discount" min="0" max="100" step="0.1" value="32.50">
-              <span class="input-unit">%</span>
-            </div>
-            <div class="input-slider-wrapper">
-              <input type="range" id="calc-slider-discount" class="range-slider" min="0" max="85" step="0.1" value="32.5">
-            </div>
-            <div class="quick-step-buttons">
-              <button class="step-btn calc-step-btn" data-delta="-5">-5%</button>
-              <button class="step-btn calc-step-btn" data-delta="-1">-1%</button>
-              <button class="step-btn calc-step-btn" data-delta="1">+1%</button>
-              <button class="step-btn calc-step-btn" data-delta="5">+5%</button>
-            </div>
+          <!-- Category Filter Pills -->
+          <div id="calc-category-bar" class="category-filter-bar">
+            <button class="cat-pill active" data-category="all">✨ Todos</button>
+            <button class="cat-pill" data-category="vidrio_vr">🍾 Vidrio VR</button>
+            <button class="cat-pill" data-category="latas">🥫 Latas</button>
+            <button class="cat-pill" data-category="pet">🧴 PET</button>
+            <button class="cat-pill" data-category="aguas">💧 Aguas</button>
+            <button class="cat-pill" data-category="mixers_energy">⚡ Energéticas / Mixers</button>
           </div>
 
-          <!-- Input 2: Precio Caja Objetivo (€) -->
-          <div class="input-box">
-            <div class="input-label">
-              <span>Precio Caja Objetivo</span>
-              <span style="font-size: 0.72rem; color: var(--success); font-weight: 800;">RECÁLCULO AUTO</span>
-            </div>
-            <div class="input-field-wrapper">
-              <input type="number" id="calc-input-box" min="0" step="0.01" value="18.47">
-              <span class="input-unit">€</span>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
-              Escribe un precio objetivo (ej. 16,00) para calcular el % de descuento necesario.
-            </div>
+          <!-- Real-time Search Bar -->
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="calc-search-input" class="search-input" placeholder="Buscar por nombre, formato o marca (ej. Coca-Cola, Fanta, 33 cl, Monster)...">
+            <button id="calc-search-clear" class="search-clear-btn" title="Limpiar búsqueda">✕</button>
           </div>
 
-          <!-- Input 3: Precio Unidad Objetivo (€) -->
-          <div class="input-box">
-            <div class="input-label">
-              <span>Precio Unidad Objetivo</span>
-              <span style="font-size: 0.72rem; color: #3b82f6; font-weight: 800;">RECÁLCULO AUTO</span>
-            </div>
-            <div class="input-field-wrapper">
-              <input type="number" id="calc-input-unit" min="0" step="0.001" value="0.770">
-              <span class="input-unit">€</span>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
-              Escribe el coste por botella/lata para calcular automáticamente la caja y el descuento.
-            </div>
+          <!-- Product Picker Carousel / Grid -->
+          <div id="calc-product-grid" class="product-selector-grid">
+            <!-- Rendered by calculator.js -->
           </div>
 
-        </div>
-
-        <!-- Sales Pitch Banner -->
-        <div id="calc-pitch-banner" class="sales-pitch-banner">
-          <span class="pitch-icon">💡</span>
-          <span id="calc-pitch-text">
-            VR 23,7 cl (+18,5% vs 200 ml competidor, casi 1 litro más por caja al mismo precio de consumición).
-          </span>
-        </div>
-
-      </div>
-
-      <!-- Card: Calculadora de Rentabilidad & Margen del Bar (Opción 1) -->
-      <div class="margin-card">
-        <div class="margin-header">
-          <div class="margin-title">
-            <h3>💶 Rentabilidad & Margen del Hostelero (Beneficio del Bar)</h3>
-            <p>Demuestra al cliente cuánto dinero limpio gana por cada botella, por cada caja y al mes en su bolsillo.</p>
-          </div>
-          <button id="margin-btn-copy-pitch" class="btn btn-success btn-sm" title="Copiar argumento de rentabilidad para WhatsApp">
-            📲 Copiar Rentabilidad
-          </button>
-        </div>
-
-        <!-- Inputs Grid -->
-        <div class="margin-inputs-grid">
-          <!-- Input 1: PVP Venta al Público -->
-          <div class="margin-input-box">
-            <div class="margin-input-label">
-              <span>PVP Venta en Barra / Terraza</span>
-              <span id="margin-cost-ref" style="color: var(--primary); font-weight: 800;">Coste bar: 0,770 €/ud</span>
-            </div>
-            <div class="input-field-wrapper">
-              <input type="number" id="margin-input-pvp" step="0.10" min="0.50" value="2.50" class="comp-input" style="width: 100%; font-size: 1.3rem; font-weight: 800;">
-              <span class="input-unit">€</span>
-            </div>
-            <div class="margin-quick-pills" id="margin-pvp-pills">
-              <button class="margin-pill" data-pvp="2.00">2,00 €</button>
-              <button class="margin-pill" data-pvp="2.20">2,20 €</button>
-              <button class="margin-pill active" data-pvp="2.50">2,50 €</button>
-              <button class="margin-pill" data-pvp="2.80">2,80 €</button>
-              <button class="margin-pill" data-pvp="3.00">3,00 €</button>
-              <button class="margin-pill" data-pvp="3.50">3,50 €</button>
-            </div>
-          </div>
-
-          <!-- Input 2: Consumo Mensual del Bar -->
-          <div class="margin-input-box">
-            <div class="margin-input-label">
-              <span>Rotación / Consumo Estimado</span>
-              <span style="color: var(--text-muted); font-weight: 700;">Cajas por mes</span>
-            </div>
-            <div class="input-field-wrapper">
-              <input type="number" id="margin-input-boxes-month" min="1" max="1000" value="15" class="comp-input" style="width: 100%; font-size: 1.3rem; font-weight: 800;">
-              <span class="input-unit">cajas</span>
-            </div>
-            <div class="margin-quick-pills" id="margin-boxes-pills">
-              <button class="margin-pill" data-boxes="5">5 cajas</button>
-              <button class="margin-pill" data-boxes="10">10 cajas</button>
-              <button class="margin-pill active" data-boxes="15">15 cajas</button>
-              <button class="margin-pill" data-boxes="25">25 cajas</button>
-              <button class="margin-pill" data-boxes="50">50 cajas</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Results Grid -->
-        <div class="margin-results-grid">
-          <div class="margin-res-box">
-            <span class="m-label">💰 Beneficio por Botella/Lata</span>
-            <span id="margin-profit-unit" class="m-val" style="color: var(--success-text);">+1,730 €</span>
-            <span id="margin-percent-unit" class="m-sub">Margen: 69,2% sobre PVP</span>
-          </div>
-
-          <div class="margin-res-box">
-            <span class="m-label">📦 Beneficio Neto por Caja</span>
-            <span id="margin-profit-box" class="m-val">+41,52 €</span>
-            <span id="margin-profit-box-sub" class="m-sub">Por cada caja de 24 uds</span>
-          </div>
-
-          <div class="margin-res-box highlight-profit">
-            <span class="m-label">🏆 Ganancia Mensual del Bar</span>
-            <span id="margin-profit-month" class="m-val">+622,80 €</span>
-            <span id="margin-profit-year" class="m-sub">+7.473 € beneficio anual</span>
-          </div>
-
-          <div class="margin-res-box">
-            <span class="m-label">⚖️ "El Céntimo Inútil"</span>
-            <span id="margin-diff-cents" class="m-val" style="color: var(--text-muted);">0,04 €/ud</span>
-            <span class="m-sub">Por cada 1€ de rebaja competidor</span>
-          </div>
-        </div>
-
-        <!-- Commercial Speech Badge -->
-        <div id="margin-pitch-badge" class="margin-pitch-badge">
-          💡 Argumento de cierre: En una botella donde el bar se embolsa <strong>1,73 € limpios</strong>, discutir por 4 céntimos de la competencia no tiene sentido frente a la marca líder nº1 que llena su terraza y ofrece 23,7 cl (+18,5% más de producto).
-        </div>
-      </div>
-
-      <!-- Card: Simulador de Bonificaciones & Rappels (Opción 2) -->
-      <div class="bonif-card">
-        <div class="bonif-header">
-          <div class="bonif-title">
-            <h3>🎁 Simulador de Bonificaciones & Rappels (Ofertas en Especie)</h3>
-            <p>Calcula el coste real efectivo por caja y unidad al regalar producto (10+1, 5+1...) o pactar rappel de volumen.</p>
-          </div>
-          
-          <div class="bonif-types" id="bonif-pills-bar">
-            <button class="bonif-type-btn active" data-type="none">Sin Bonificación</button>
-            <button class="bonif-type-btn" data-type="promo" data-buy="10" data-free="1">🎁 10 + 1 (9,1% extra)</button>
-            <button class="bonif-type-btn" data-type="promo" data-buy="5" data-free="1">🎁 5 + 1 (16,7% extra)</button>
-            <button class="bonif-type-btn" data-type="promo" data-buy="10" data-free="2">🎁 10 + 2 (16,7% extra)</button>
-            <button class="bonif-type-btn" data-type="promo" data-buy="20" data-free="3">🎁 20 + 3 (13,0% extra)</button>
-            <button class="bonif-type-btn" data-type="rappel" data-rappel="1.00">💶 Rappel 1,00 €/caja</button>
-            <button class="bonif-type-btn" data-type="rappel" data-rappel="1.50">💶 Rappel 1,50 €/caja</button>
-            <button class="bonif-type-btn" data-type="custom">⚙️ Personalizado</button>
-          </div>
-
-          <!-- Custom Inputs Form (hidden unless "Personalizado" is clicked) -->
-          <div id="bonif-custom-form" style="display: none; background: var(--bg-input); padding: 12px 16px; border-radius: var(--radius-md); border: 1px dashed var(--border); margin-top: 8px;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
-              <div>
-                <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Cajas Compradas</label>
-                <input type="number" id="bonif-custom-buy" min="1" value="10" class="comp-input" style="width: 100%;">
+          <!-- Calculator Card (Bidirectional Engine) -->
+          <div class="calc-card">
+            <div class="calc-header">
+              <div class="calc-product-info">
+                <h2 id="calc-prod-name">Coca-Cola Regular VR 23,7 cl</h2>
+                <div class="calc-subtitle">
+                  <span id="calc-prod-code" class="badge-format">VR01</span>
+                  <span id="calc-prod-format">VR 23,7 cl</span>
+                  <span>·</span>
+                  <span id="calc-prod-units">24 uds/caja</span>
+                  <span>·</span>
+                  <span id="calc-prod-pv">0.024 € PV/caja</span>
+                  <span>·</span>
+                  <span id="calc-prod-iva">IVA 21%</span>
+                </div>
               </div>
-              <div>
-                <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Cajas de Regalo (Gratis)</label>
-                <input type="number" id="bonif-custom-free" min="0" value="1" class="comp-input" style="width: 100%;">
-              </div>
-              <div>
-                <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Rappel por Caja (€)</label>
-                <input type="number" id="bonif-custom-rappel" step="0.10" min="0" value="0.00" class="comp-input" style="width: 100%;">
+              <div class="calc-quick-actions">
+                <button id="calc-btn-target16" class="btn btn-warning btn-sm" title="Fijar precio de caja a 16,00 € y recalcular descuento">
+                  🎯 Igualar a 16,00 €
+                </button>
+                <button id="calc-btn-reset-t3" class="btn btn-secondary btn-sm" title="Restaurar descuento al Tramo 3 oficial">
+                  🔄 Reset a Tramo 3
+                </button>
+                <button id="calc-btn-add-order" class="btn btn-primary btn-sm" title="Añadir esta caja al pedido actual">
+                  🛒 Añadir al Pedido
+                </button>
+                <button id="calc-btn-compare" class="btn btn-secondary btn-sm" title="Añadir a la comparativa de la competencia">
+                  ⚔️ Comparar en Albarán
+                </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Real Results Grid -->
-        <div class="bonif-results-grid">
-          <div class="bonif-res-box">
-            <span class="res-label">💰 Coste Efectivo Caja</span>
-            <span id="bonif-effective-box" class="res-value">18,47 €</span>
-            <span id="bonif-box-diff" class="res-subtext">Tarifa neta estándar</span>
+            <!-- Bidirectional Calculation Inputs Form -->
+            <div class="bidirectional-grid">
+              
+              <!-- Input 1: Descuento % -->
+              <div class="input-box">
+                <div class="input-label">
+                  <span>% Descuento Comercial</span>
+                  <span style="font-size: 0.72rem; color: var(--primary); font-weight: 800;">EDITABLE</span>
+                </div>
+                <div class="input-field-wrapper">
+                  <input type="number" id="calc-input-discount" min="0" max="100" step="0.1" value="32.50">
+                  <span class="input-unit">%</span>
+                </div>
+                <div class="input-slider-wrapper">
+                  <input type="range" id="calc-slider-discount" class="range-slider" min="0" max="85" step="0.1" value="32.5">
+                </div>
+                <div class="quick-step-buttons">
+                  <button class="step-btn calc-step-btn" data-delta="-5">-5%</button>
+                  <button class="step-btn calc-step-btn" data-delta="-1">-1%</button>
+                  <button class="step-btn calc-step-btn" data-delta="1">+1%</button>
+                  <button class="step-btn calc-step-btn" data-delta="5">+5%</button>
+                </div>
+              </div>
+
+              <!-- Input 2: Precio Caja Objetivo (€) -->
+              <div class="input-box">
+                <div class="input-label">
+                  <span>Precio Caja Objetivo</span>
+                  <span style="font-size: 0.72rem; color: var(--success); font-weight: 800;">RECÁLCULO AUTO</span>
+                </div>
+                <div class="input-field-wrapper">
+                  <input type="number" id="calc-input-box" min="0" step="0.01" value="18.47">
+                  <span class="input-unit">€</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+                  Escribe un precio objetivo (ej. 16,00) para calcular el % de descuento necesario.
+                </div>
+              </div>
+
+              <!-- Input 3: Precio Unidad Objetivo (€) -->
+              <div class="input-box">
+                <div class="input-label">
+                  <span>Precio Unidad Objetivo</span>
+                  <span style="font-size: 0.72rem; color: #3b82f6; font-weight: 800;">RECÁLCULO AUTO</span>
+                </div>
+                <div class="input-field-wrapper">
+                  <input type="number" id="calc-input-unit" min="0" step="0.001" value="0.770">
+                  <span class="input-unit">€</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+                  Escribe el coste por botella/lata para calcular automáticamente la caja y el descuento.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Sales Pitch Banner -->
+            <div id="calc-pitch-banner" class="sales-pitch-banner">
+              <span class="pitch-icon">💡</span>
+              <span id="calc-pitch-text">
+                VR 23,7 cl (+18,5% vs 200 ml competidor, casi 1 litro más por caja al mismo precio de consumición).
+              </span>
+            </div>
+
           </div>
 
-          <div class="bonif-res-box">
-            <span class="res-label">🍾 Coste Efectivo Unidad</span>
-            <span id="bonif-effective-unit" class="res-value">0,770 €</span>
-            <span id="bonif-unit-diff" class="res-subtext">Por botella/lata</span>
+          <!-- Card: Calculadora de Rentabilidad & Margen del Bar -->
+          <div class="margin-card">
+            <div class="margin-header">
+              <div class="margin-title">
+                <h3>💶 Parámetros del Local (PVP en Barra & Rotación)</h3>
+                <p>Ajusta el precio de venta al público en terraza/barra y las cajas consumidas al mes.</p>
+              </div>
+              <button id="margin-btn-copy-pitch" class="btn btn-success btn-sm" title="Copiar argumento de rentabilidad para WhatsApp">
+                📲 Copiar Rentabilidad
+              </button>
+            </div>
+
+            <!-- Inputs Grid -->
+            <div class="margin-inputs-grid">
+              <!-- Input 1: PVP Venta al Público -->
+              <div class="margin-input-box">
+                <div class="margin-input-label">
+                  <span>PVP Venta en Barra / Terraza</span>
+                  <span id="margin-cost-ref" style="color: var(--primary); font-weight: 800;">Coste bar: 0,770 €/ud</span>
+                </div>
+                <div class="input-field-wrapper">
+                  <input type="number" id="margin-input-pvp" step="0.10" min="0.50" value="2.50" class="comp-input" style="width: 100%; font-size: 1.3rem; font-weight: 800;">
+                  <span class="input-unit">€</span>
+                </div>
+                <div class="margin-quick-pills" id="margin-pvp-pills">
+                  <button class="margin-pill" data-pvp="2.00">2,00 €</button>
+                  <button class="margin-pill" data-pvp="2.20">2,20 €</button>
+                  <button class="margin-pill active" data-pvp="2.50">2,50 €</button>
+                  <button class="margin-pill" data-pvp="2.80">2,80 €</button>
+                  <button class="margin-pill" data-pvp="3.00">3,00 €</button>
+                  <button class="margin-pill" data-pvp="3.50">3,50 €</button>
+                </div>
+              </div>
+
+              <!-- Input 2: Consumo Mensual del Bar -->
+              <div class="margin-input-box">
+                <div class="margin-input-label">
+                  <span>Rotación / Consumo Estimado</span>
+                  <span style="color: var(--text-muted); font-weight: 700;">Cajas por mes</span>
+                </div>
+                <div class="input-field-wrapper">
+                  <input type="number" id="margin-input-boxes-month" min="1" max="1000" value="15" class="comp-input" style="width: 100%; font-size: 1.3rem; font-weight: 800;">
+                  <span class="input-unit">cajas</span>
+                </div>
+                <div class="margin-quick-pills" id="margin-boxes-pills">
+                  <button class="margin-pill" data-boxes="5">5 cajas</button>
+                  <button class="margin-pill" data-boxes="10">10 cajas</button>
+                  <button class="margin-pill active" data-boxes="15">15 cajas</button>
+                  <button class="margin-pill" data-boxes="25">25 cajas</button>
+                  <button class="margin-pill" data-boxes="50">50 cajas</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="margin-results-grid">
+              <div class="margin-res-box">
+                <span class="m-label">💰 Beneficio por Botella/Lata</span>
+                <span id="margin-profit-unit" class="m-val" style="color: var(--success-text);">+1,730 €</span>
+                <span id="margin-percent-unit" class="m-sub">Margen: 69,2% sobre PVP</span>
+              </div>
+
+              <div class="margin-res-box">
+                <span class="m-label">📦 Beneficio Neto por Caja</span>
+                <span id="margin-profit-box" class="m-val">+41,52 €</span>
+                <span id="margin-profit-box-sub" class="m-sub">Por cada caja de 24 uds</span>
+              </div>
+
+              <div class="margin-res-box highlight-profit">
+                <span class="m-label">🏆 Ganancia Mensual del Bar</span>
+                <span id="margin-profit-month" class="m-val">+622,80 €</span>
+                <span id="margin-profit-year" class="m-sub">+7.473 € beneficio anual</span>
+              </div>
+
+              <div class="margin-res-box">
+                <span class="m-label">⚖️ "El Céntimo Inútil"</span>
+                <span id="margin-diff-cents" class="m-val" style="color: var(--text-muted);">0,04 €/ud</span>
+                <span class="m-sub">Por cada 1€ de rebaja competidor</span>
+              </div>
+            </div>
+
+            <!-- Commercial Speech Badge -->
+            <div id="margin-pitch-badge" class="margin-pitch-badge">
+              💡 Argumento de cierre: En una botella donde el bar se embolsa <strong>1,73 € limpios</strong>, discutir por 4 céntimos de la competencia no tiene sentido frente a la marca líder nº1 que llena su terraza y ofrece 23,7 cl (+18,5% más de producto).
+            </div>
           </div>
 
-          <div class="bonif-res-box highlight-green">
-            <span class="res-label">🏷️ Descuento Real Acumulado</span>
-            <span id="bonif-total-discount" class="res-value">32,50%</span>
-            <span id="bonif-equiv-text" class="res-subtext">Descuento del tramo activo</span>
+          <!-- Card: Simulador de Bonificaciones & Rappels -->
+          <div class="bonif-card">
+            <div class="bonif-header">
+              <div class="bonif-title">
+                <h3>🎁 Simulador de Bonificaciones & Rappels</h3>
+                <p>Calcula el coste real efectivo por caja y unidad al regalar producto (10+1, 5+1...) o pactar rappel de volumen.</p>
+              </div>
+              
+              <div class="bonif-types" id="bonif-pills-bar">
+                <button class="bonif-type-btn active" data-type="none">Sin Bonificación</button>
+                <button class="bonif-type-btn" data-type="promo" data-buy="10" data-free="1">🎁 10 + 1 (9,1% extra)</button>
+                <button class="bonif-type-btn" data-type="promo" data-buy="5" data-free="1">🎁 5 + 1 (16,7% extra)</button>
+                <button class="bonif-type-btn" data-type="promo" data-buy="10" data-free="2">🎁 10 + 2 (16,7% extra)</button>
+                <button class="bonif-type-btn" data-type="promo" data-buy="20" data-free="3">🎁 20 + 3 (13,0% extra)</button>
+                <button class="bonif-type-btn" data-type="rappel" data-rappel="1.00">💶 Rappel 1,00 €/caja</button>
+                <button class="bonif-type-btn" data-type="rappel" data-rappel="1.50">💶 Rappel 1,50 €/caja</button>
+                <button class="bonif-type-btn" data-type="custom">⚙️ Personalizado</button>
+              </div>
+
+              <!-- Custom Inputs Form -->
+              <div id="bonif-custom-form" style="display: none; background: var(--bg-input); padding: 12px 16px; border-radius: var(--radius-md); border: 1px dashed var(--border); margin-top: 8px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+                  <div>
+                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Cajas Compradas</label>
+                    <input type="number" id="bonif-custom-buy" min="1" value="10" class="comp-input" style="width: 100%;">
+                  </div>
+                  <div>
+                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Cajas de Regalo (Gratis)</label>
+                    <input type="number" id="bonif-custom-free" min="0" value="1" class="comp-input" style="width: 100%;">
+                  </div>
+                  <div>
+                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Rappel por Caja (€)</label>
+                    <input type="number" id="bonif-custom-rappel" step="0.10" min="0" value="0.00" class="comp-input" style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real Results Grid -->
+            <div class="bonif-results-grid">
+              <div class="bonif-res-box">
+                <span class="res-label">💰 Coste Efectivo Caja</span>
+                <span id="bonif-effective-box" class="res-value">18,47 €</span>
+                <span id="bonif-box-diff" class="res-subtext">Tarifa neta estándar</span>
+              </div>
+
+              <div class="bonif-res-box">
+                <span class="res-label">🍾 Coste Efectivo Unidad</span>
+                <span id="bonif-effective-unit" class="res-value">0,770 €</span>
+                <span id="bonif-unit-diff" class="res-subtext">Por botella/lata</span>
+              </div>
+
+              <div class="bonif-res-box highlight-green">
+                <span class="res-label">🏷️ Descuento Real Acumulado</span>
+                <span id="bonif-total-discount" class="res-value">32,50%</span>
+                <span id="bonif-equiv-text" class="res-subtext">Descuento del tramo activo</span>
+              </div>
+
+              <div class="bonif-res-box">
+                <span class="res-label">📦 Valor del Regalo / Abono</span>
+                <span id="bonif-gift-value" class="res-value">0,00 €</span>
+                <span id="bonif-gift-subtext" class="res-subtext">Sin bonificación activa</span>
+              </div>
+            </div>
+
+            <!-- Commercial Pitch and Action Button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 12px;">
+              <div id="bonif-pitch-text" class="bonif-pitch-badge">
+                💡 Selecciona una bonificación (ej. 10+1) para ver cómo se derrumba el coste real por botella frente al cliente.
+              </div>
+              <button id="bonif-btn-apply-order" class="btn btn-primary btn-sm">
+                🛒 Añadir al Pedido con esta Oferta
+              </button>
+            </div>
           </div>
 
-          <div class="bonif-res-box">
-            <span class="res-label">📦 Valor del Regalo / Abono</span>
-            <span id="bonif-gift-value" class="res-value">0,00 €</span>
-            <span id="bonif-gift-subtext" class="res-subtext">Sin bonificación activa</span>
-          </div>
-        </div>
 
-        <!-- Commercial Pitch and Action Button -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 12px;">
-          <div id="bonif-pitch-text" class="bonif-pitch-badge">
-            💡 Selecciona una bonificación (ej. 10+1) para ver cómo se derrumba el coste real por botella frente al cliente.
-          </div>
-          <button id="bonif-btn-apply-order" class="btn btn-primary btn-sm">
-            🛒 Añadir al Pedido con esta Oferta
-          </button>
-        </div>
-      </div>
 
     </section>
 
@@ -715,8 +723,12 @@
         <h3 id="modal-picker-title">Seleccionar Producto para Comparativa</h3>
         <button id="modal-picker-close" class="modal-close">✕</button>
       </div>
-      <div style="padding: 12px 16px;">
-        <input type="text" id="modal-picker-search" class="search-input" placeholder="Buscar por nombre o formato...">
+      <div style="padding: 14px 16px;">
+        <div class="search-wrapper" style="margin-bottom: 0;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="modal-picker-search" class="search-input" placeholder="Buscar por nombre o formato (ej. Coca, Fanta, Monster, 35 cl)..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <button id="modal-picker-search-clear" class="search-clear-btn" title="Limpiar búsqueda">✕</button>
+        </div>
       </div>
       <div id="modal-picker-list" class="modal-body-list">
         <!-- Rendered dynamically -->
@@ -792,13 +804,23 @@
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- JavaScript Modules -->
-  <script src="js/products-data.js"></script>
-  <script src="js/calculator.js"></script>
-  <script src="js/comparator.js"></script>
-  <script src="js/orders.js"></script>
-  <script src="js/master-table.js"></script>
-  <script src="js/app.js"></script>
+  <!-- JavaScript Modules with Cache-Busting Version Query -->
+  <script src="js/products-data.js?v=2027.14"></script>
+  <script src="js/calculator.js?v=2027.14"></script>
+  <script src="js/comparator.js?v=2027.14"></script>
+  <script src="js/orders.js?v=2027.14"></script>
+  <script src="js/master-table.js?v=2027.14"></script>
+  <script src="js/app.js?v=2027.14"></script>
 
+  <!-- Service Worker Instant Update Checker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var reg of registrations) {
+          reg.update();
+        }
+      });
+    }
+  </script>
 </body>
 </html>
