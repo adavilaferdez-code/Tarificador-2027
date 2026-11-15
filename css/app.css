@@ -11,12 +11,12 @@
   --primary-border: #fecaca;
   --primary-glow: rgba(230, 29, 43, 0.25);
 
-  --bg-page: #f8fafc;
+  --bg-page: #f5f5f7;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
+  --bg-card-hover: #f5f5f7;
   --bg-elevated: #ffffff;
-  --bg-input: #f8fafc;
-  --border: #e2e8f0;
+  --bg-input: #f2f2f7;
+  --border: rgba(15, 23, 42, 0.08);
   --border-focus: #E61D2B;
 
   --text-main: #0f172a;
@@ -33,13 +33,13 @@
   --danger-bg: #fef2f2;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
   --shadow-primary: 0 10px 20px -5px rgba(230, 29, 43, 0.35);
 
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-lg: 20px;
   --radius-xl: 24px;
   --radius-full: 9999px;
 
@@ -393,29 +393,36 @@ body {
   transform: translateX(16px);
 }
 
-/* Desktop Navigation Bar */
+/* Desktop Navigation Bar (Segmented Control) */
 .desktop-nav {
   display: none;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
 }
 
 .desktop-nav-inner {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
+  align-items: center;
   gap: 6px;
-  padding: 4px 16px;
+  padding: 5px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
 .nav-tab-btn {
-  padding: 10px 18px;
-  border: none;
+  flex: 1;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 700;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -423,15 +430,56 @@ body {
   transition: all var(--transition-fast);
 }
 
+.nav-tab-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
 .nav-tab-btn:hover {
   color: var(--text-main);
-  background: var(--bg-card-hover);
+  background: rgba(128, 128, 128, 0.08);
 }
 
 .nav-tab-btn.active {
-  color: white;
+  color: var(--primary);
+  background: var(--bg-card);
+  border-color: var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
   background: var(--primary);
-  box-shadow: var(--shadow-sm);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mobile-nav-badge {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 /* Mobile Bottom Navigation (1-Hand Street Ergonomics) */
@@ -1940,3 +1988,321 @@ body {
 
 
 
+
+/* ==========================================================================
+   MODO VISTA CLIENTE (1-TOQUE PARA OCULTAR DESCUENTOS Y TRAMOS INTERNOS)
+   ========================================================================== */
+.client-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.client-mode-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.client-mode-btn.active {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+@media (max-width: 480px) {
+  .client-mode-btn {
+    padding: 0 10px;
+    font-size: 0.74rem;
+  }
+}
+
+[data-client-mode="true"] .internal-only,
+[data-client-mode="true"] .bidirectional-grid .input-box:first-child {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  [data-client-mode="true"] .key-figures-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  [data-client-mode="true"] .bidirectional-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ==========================================================================
+   BOTÓN DORADO: RESETEAR PRESUPUESTO PIRATA
+   ========================================================================== */
+.btn-gold {
+  background: linear-gradient(135deg, #f5d061 0%, #d4af37 55%, #b8860b 100%);
+  color: #1f1600;
+  border: 1px solid #b8860b;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.35);
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #fbe084 0%, #e0bc46 55%, #c99716 100%);
+  border-color: #d4af37;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   MODAL PICKER POR BLOQUES + STEPPER DIRECTO (+1 / -1 SIN CERRAR)
+   ========================================================================== */
+.picker-blocks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 16px 4px;
+}
+
+@media (max-width: 480px) {
+  .picker-blocks-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px 12px 4px;
+  }
+}
+
+.picker-block-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 54px;
+}
+
+.picker-block-btn:hover {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+}
+
+.picker-block-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(217, 27, 40, 0.28);
+}
+
+.picker-block-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.picker-block-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.modal-product-item.in-cart {
+  border-color: var(--primary);
+  background: rgba(217, 27, 40, 0.04);
+}
+
+.picker-prod-info {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.picker-prod-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.picker-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.picker-add-one-btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.picker-add-one-btn:active {
+  transform: scale(0.95);
+}
+
+.picker-step-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-step-btn.picker-inc-btn {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.picker-qty-badge {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.picker-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.picker-summary-text {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   APPLE DESIGN LANGUAGE POLISH (FROSTED GLASS, TABULAR NUMBERS, SOFT DEPTH)
+   ========================================================================== */
+.app-header {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+[data-theme="dark"] .app-header {
+  background-color: rgba(21, 28, 40, 0.84);
+}
+
+.mobile-nav {
+  background-color: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+[data-theme="dark"] .mobile-nav {
+  background-color: rgba(21, 28, 40, 0.88);
+}
+
+.desktop-nav {
+  background: transparent;
+}
+
+.key-value,
+.col-total,
+.res-value,
+.m-val,
+.order-summary-card,
+.comp-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.key-card,
+.calc-card,
+.order-card,
+.order-summary-card,
+.comp-summary-card,
+.bonif-card,
+.margin-card {
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.key-card {
+  border-top-width: 3px;
+}
+
+.btn {
+  min-height: 42px;
+  border-radius: 12px;
+  letter-spacing: -0.01em;
+}
+
+.btn-sm {
+  min-height: 36px;
+  border-radius: 10px;
+}
+
+/* Apple Clean Pass: Minimalist Hero, Neutral KPI Cards, Crisp Pills */
+.section-hero {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: 20px;
+}
+
+.key-card.highlight-blue,
+.key-card.highlight-orange {
+  border-top-color: var(--border);
+  border-top-width: 1px;
+}
+
+.key-card.highlight-red {
+  border-top-width: 3px;
+}
+
+.key-card.highlight-green {
+  border-top-width: 3px;
+}
+
+.cat-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  padding: 8px 16px;
+}
+
+.cat-pill.active {
+  background: var(--text-main);
+  color: var(--bg-card);
+  border-color: var(--text-main);
+}

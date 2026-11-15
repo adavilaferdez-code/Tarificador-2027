@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MÓDULO 2: COMPARADOR DE FACTURAS VS. COMPETENCIA ("MODO CISNEROS")
  * Compara albaranes y facturas reales de competidores / distribuidores piratas
  * contra nuestra tarifa oficial o precios negociados, calcula ahorro y genera mensajes para WhatsApp.
@@ -32,6 +32,7 @@ const ComparatorModule = {
     this.btnSubida6 = document.getElementById('comp-btn-subida6');
     this.btnCopyWhatsApp = document.getElementById('comp-btn-whatsapp');
     this.btnClear = document.getElementById('comp-btn-clear');
+    this.btnResetPirata = document.getElementById('comp-btn-reset-pirata');
 
     // Distributor name & headers
     this.inputDistributorName = document.getElementById('comp-distributor-name');
@@ -85,12 +86,16 @@ const ComparatorModule = {
 
     if (this.btnClear) {
       this.btnClear.addEventListener('click', () => {
-        if (confirm('¿Deseas vaciar la comparativa actual?')) {
-          this.items = [];
-          this.saveToStorage();
-          this.render();
-          AppNotification.show('🗑️ Comparativa vaciada');
-        }
+        this.items = [];
+        this.saveToStorage();
+        this.render();
+        AppNotification.show('🗑️ Comparativa vaciada');
+      });
+    }
+
+    if (this.btnResetPirata) {
+      this.btnResetPirata.addEventListener('click', () => {
+        this.resetPirata();
       });
     }
 
@@ -218,6 +223,30 @@ const ComparatorModule = {
     this.render();
   },
 
+  resetPirata() {
+    this.items = [];
+    this.subidaCompetenciaApplied = false;
+    this.includeEnvases = true;
+    this.distributorName = 'Distribuidor Pirata / Competencia';
+
+    if (this.inputDistributorName) {
+      this.inputDistributorName.value = this.distributorName;
+    }
+    if (this.checkIncludeEnvases) {
+      this.checkIncludeEnvases.checked = true;
+    }
+    if (this.btnSubida6) {
+      this.btnSubida6.classList.remove('active', 'btn-primary');
+      this.btnSubida6.classList.add('btn-secondary');
+      this.btnSubida6.innerHTML = '📈 +6% Subida Competencia';
+    }
+
+    this.updateDistributorLabels();
+    this.saveToStorage();
+    this.render();
+    AppNotification.show('✨ Presupuesto Pirata reseteado');
+  },
+
   toggleSubida6() {
     this.subidaCompetenciaApplied = !this.subidaCompetenciaApplied;
 
@@ -264,6 +293,13 @@ const ComparatorModule = {
     if (item.isCustom) return item.customUnitsPerBox || 24;
     const p = PRODUCTS_DB.find(prod => prod.id === item.productId);
     return (p && p.unitsPerBox) ? p.unitsPerBox : 24;
+  },
+
+  getIvaMultiplier(item) {
+    if (!AppState.getOptions().includeIVA) return 1;
+    const product = this.getItemProduct(item);
+    const ivaRate = (product && product.iva) ? product.iva : 21;
+    return 1 + (ivaRate / 100);
   },
 
   getOurDefaultPrice(item) {
@@ -411,16 +447,17 @@ const ComparatorModule = {
     if (!item) return;
 
     const units = this.getItemUnits(item);
+    const mult = this.getIvaMultiplier(item);
 
     if (isUnit) {
-      const unitVal = parseFloat(val) || 0;
-      item.compPrice = parseFloat((unitVal * units).toFixed(2));
+      const unitBase = (parseFloat(val) || 0) / mult;
+      item.compPrice = parseFloat((unitBase * units).toFixed(2));
       const boxInput = document.getElementById(`comp-box-input-${index}`);
-      if (boxInput) boxInput.value = item.compPrice.toFixed(2);
+      if (boxInput) boxInput.value = (item.compPrice * mult).toFixed(2);
     } else {
-      item.compPrice = parseFloat(val) || 0;
+      item.compPrice = (parseFloat(val) || 0) / mult;
       const unitInput = document.getElementById(`comp-unit-input-${index}`);
-      if (unitInput) unitInput.value = units > 0 ? (item.compPrice / units).toFixed(3) : '0.000';
+      if (unitInput) unitInput.value = units > 0 ? ((item.compPrice * mult) / units).toFixed(3) : '0.000';
     }
 
     item.originalCompPrice = this.subidaCompetenciaApplied
@@ -434,14 +471,15 @@ const ComparatorModule = {
     const item = this.items[index];
     if (!item) return;
     const units = this.getItemUnits(item);
+    const mult = this.getIvaMultiplier(item);
 
     const boxInput = document.getElementById(`comp-box-input-${index}`);
     if (boxInput && !isNaN(item.compPrice)) {
-      boxInput.value = item.compPrice.toFixed(2);
+      boxInput.value = (item.compPrice * mult).toFixed(2);
     }
     const unitInput = document.getElementById(`comp-unit-input-${index}`);
     if (unitInput && units > 0) {
-      unitInput.value = (item.compPrice / units).toFixed(3);
+      unitInput.value = ((item.compPrice * mult) / units).toFixed(3);
     }
 
     this.saveToStorage();
@@ -466,16 +504,18 @@ const ComparatorModule = {
   onOurPriceInput(index, val) {
     const item = this.items[index];
     if (!item) return;
-    item.customOurPrice = parseFloat(val) || 0;
+    const mult = this.getIvaMultiplier(item);
+    item.customOurPrice = (parseFloat(val) || 0) / mult;
     this.updateRowCalculations(index);
   },
 
   onOurPriceBlur(index) {
     const item = this.items[index];
     if (!item) return;
+    const mult = this.getIvaMultiplier(item);
     const ourInput = document.getElementById(`comp-our-input-${index}`);
     if (ourInput && item.customOurPrice != null) {
-      ourInput.value = item.customOurPrice.toFixed(2);
+      ourInput.value = (item.customOurPrice * mult).toFixed(2);
     }
     this.saveToStorage();
   },
@@ -493,11 +533,12 @@ const ComparatorModule = {
     const item = this.items[index];
     if (!item) return;
 
-    const compBoxPrice = item.compPrice;
-    const ourBoxPrice = item.customOurPrice != null ? item.customOurPrice : this.getOurDefaultPrice(item);
+    const mult = this.getIvaMultiplier(item);
+    const compBoxPrice = item.compPrice * mult;
+    const ourBoxPrice = (item.customOurPrice != null ? item.customOurPrice : this.getOurDefaultPrice(item)) * mult;
 
-    const lineCompSinIVA = compBoxPrice * item.boxes;
-    const lineOurSinIVA = ourBoxPrice * item.boxes;
+    const lineCompDisplay = compBoxPrice * item.boxes;
+    const lineOurDisplay = ourBoxPrice * item.boxes;
 
     const diffPerBox = compBoxPrice - ourBoxPrice;
     const lineSavings = diffPerBox * item.boxes;
@@ -505,12 +546,12 @@ const ComparatorModule = {
 
     const compTotalEl = document.getElementById(`comp-line-total-comp-${index}`);
     if (compTotalEl) {
-      compTotalEl.textContent = PriceEngine.formatCurrency(lineCompSinIVA);
+      compTotalEl.textContent = PriceEngine.formatCurrency(lineCompDisplay);
     }
 
     const ourTotalEl = document.getElementById(`comp-line-total-our-${index}`);
     if (ourTotalEl) {
-      ourTotalEl.textContent = PriceEngine.formatCurrency(lineOurSinIVA);
+      ourTotalEl.textContent = PriceEngine.formatCurrency(lineOurDisplay);
     }
 
     const diffEl = document.getElementById(`comp-cell-diff-${index}`);
@@ -536,7 +577,7 @@ const ComparatorModule = {
   },
 
   render() {
-    if (!this.tableBody) return;
+    if (!this.tableBody) { this.cacheDOM(); if (!this.tableBody) return; }
     const channel = AppState.getActiveChannel();
     this.updateDistributorLabels();
 
@@ -585,14 +626,20 @@ const ComparatorModule = {
       }
 
       const defaultOurBox = this.getOurDefaultPrice(item);
-      const ourBoxPrice = isCustomOurPrice ? item.customOurPrice : defaultOurBox;
+      const ourBoxBase = isCustomOurPrice ? item.customOurPrice : defaultOurBox;
+      const compBoxBase = item.compPrice;
 
-      const compBoxPrice = item.compPrice;
+      const mult = this.getIvaMultiplier(item);
+      const compBoxPrice = compBoxBase * mult;
+      const ourBoxPrice = ourBoxBase * mult;
+
       const unitCompPrice = unitsPerBox > 0 ? (compBoxPrice / unitsPerBox) : 0;
       const unitOurPrice = unitsPerBox > 0 ? (ourBoxPrice / unitsPerBox) : 0;
 
-      const lineCompSinIVA = compBoxPrice * item.boxes;
-      const lineOurSinIVA = ourBoxPrice * item.boxes;
+      const lineCompSinIVA = compBoxBase * item.boxes;
+      const lineOurSinIVA = ourBoxBase * item.boxes;
+      const lineCompDisplay = compBoxPrice * item.boxes;
+      const lineOurDisplay = ourBoxPrice * item.boxes;
 
       totalCompSinIVA += lineCompSinIVA;
       totalOurSinIVA += lineOurSinIVA;
@@ -645,7 +692,7 @@ const ComparatorModule = {
                 <span style="font-size: 0.72rem; color: var(--text-muted);">€/ud</span>
               </div>
               <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
-                Total: <strong id="comp-line-total-comp-${index}" style="color: var(--text-main);">${PriceEngine.formatCurrency(lineCompSinIVA)}</strong>
+                Total: <strong id="comp-line-total-comp-${index}" style="color: var(--text-main);">${PriceEngine.formatCurrency(lineCompDisplay)}</strong>
               </div>
             </div>
           </td>
@@ -656,7 +703,7 @@ const ComparatorModule = {
               ${isCustomOurPrice ? `
                 <div class="comp-price-input-row" title="Precio manual ofertado para esta línea">
                   <input type="number" step="0.01" class="our-custom-price-field" id="comp-our-input-${index}"
-                    value="${item.customOurPrice.toFixed(2)}"
+                    value="${ourBoxPrice.toFixed(2)}"
                     oninput="ComparatorModule.onOurPriceInput(${index}, this.value)"
                     onblur="ComparatorModule.onOurPriceBlur(${index})">
                   <span style="font-size: 0.78rem; font-weight: 700; color: var(--primary);">€/caja</span>
@@ -677,7 +724,7 @@ const ComparatorModule = {
                   <span style="font-size: 0.75rem; color: var(--text-muted);">/caja</span>
                 </div>
                 <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;">
-                  ${PriceEngine.formatCurrency(unitOurPrice)}/ud ${discount > 0 ? `· Dcto ${discount.toFixed(1)}%` : ''}
+                  ${PriceEngine.formatCurrency(unitOurPrice)}/ud <span class="internal-only">${discount > 0 ? `· Dcto ${discount.toFixed(1)}%` : ''}</span>
                 </div>
                 <button type="button" class="btn-link" style="font-size: 0.72rem; color: var(--primary); text-align: left; background: none; border: none; cursor: pointer; padding: 0; margin-top: 3px; font-weight: 600;"
                   onclick="ComparatorModule.enableCustomOurPrice(${index})" title="Cambiar manualmente nuestro precio para negociar contra el pirata">
@@ -685,7 +732,7 @@ const ComparatorModule = {
                 </button>
               `}
               <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
-                Total: <strong id="comp-line-total-our-${index}" style="color: var(--text-main);">${PriceEngine.formatCurrency(lineOurSinIVA)}</strong>
+                Total: <strong id="comp-line-total-our-${index}" style="color: var(--text-main);">${PriceEngine.formatCurrency(lineOurDisplay)}</strong>
               </div>
             </div>
           </td>
@@ -762,18 +809,21 @@ const ComparatorModule = {
   },
 
   updateTotals(totalCompSinIVA, totalOurSinIVA, totalIVAComp, totalIVAOur, totalEnvases) {
-    const savingsSinIVA = totalCompSinIVA - totalOurSinIVA;
+    const includeIVA = AppState.getOptions().includeIVA;
+    const mainComp = includeIVA ? (totalCompSinIVA + totalIVAComp) : totalCompSinIVA;
+    const mainOur = includeIVA ? (totalOurSinIVA + totalIVAOur) : totalOurSinIVA;
+    const mainSavings = mainComp - mainOur;
 
     // Con IVA + Envases
     const totalCompConIVA = totalCompSinIVA + totalIVAComp + (this.includeEnvases ? totalEnvases : 0);
     const totalOurConIVA = totalOurSinIVA + totalIVAOur + (this.includeEnvases ? totalEnvases : 0);
     const savingsConIVA = totalCompConIVA - totalOurConIVA;
 
-    if (this.totalCompSinIVA) this.totalCompSinIVA.textContent = PriceEngine.formatCurrency(totalCompSinIVA);
-    if (this.totalOurSinIVA) this.totalOurSinIVA.textContent = PriceEngine.formatCurrency(totalOurSinIVA);
+    if (this.totalCompSinIVA) this.totalCompSinIVA.textContent = PriceEngine.formatCurrency(mainComp);
+    if (this.totalOurSinIVA) this.totalOurSinIVA.textContent = PriceEngine.formatCurrency(mainOur);
     if (this.totalSavingsSinIVA) {
-      this.totalSavingsSinIVA.textContent = (savingsSinIVA >= 0 ? '+' : '') + PriceEngine.formatCurrency(savingsSinIVA);
-      this.totalSavingsSinIVA.style.color = savingsSinIVA >= 0 ? 'var(--success)' : 'var(--danger)';
+      this.totalSavingsSinIVA.textContent = (mainSavings >= 0 ? '+' : '') + PriceEngine.formatCurrency(mainSavings);
+      this.totalSavingsSinIVA.style.color = mainSavings >= 0 ? 'var(--success)' : 'var(--danger)';
     }
 
     if (this.totalCompConIVA) this.totalCompConIVA.textContent = PriceEngine.formatCurrency(totalCompConIVA);
@@ -815,14 +865,16 @@ const ComparatorModule = {
     text += `📅 *Fecha:* ${new Date().toLocaleDateString('es-ES')}\n`;
     text += `------------------------------------\n\n`;
 
+    const includeIVA = AppState.getOptions().includeIVA;
     let totalComp = 0;
     let totalOur = 0;
 
     this.items.forEach(item => {
       const product = this.getItemProduct(item);
       const units = this.getItemUnits(item);
-      const compBox = item.compPrice;
-      const ourBox = item.customOurPrice != null ? item.customOurPrice : this.getOurDefaultPrice(item);
+      const mult = this.getIvaMultiplier(item);
+      const compBox = item.compPrice * mult;
+      const ourBox = (item.customOurPrice != null ? item.customOurPrice : this.getOurDefaultPrice(item)) * mult;
       const isCustomPrice = item.customOurPrice != null;
 
       const lineComp = compBox * item.boxes;
@@ -847,8 +899,8 @@ const ComparatorModule = {
 
     const savings = totalComp - totalOur;
     text += `------------------------------------\n`;
-    text += `🔴 *Total ${distName} (Sin IVA):* ${totalComp.toFixed(2)} €\n`;
-    text += `🟢 *Total Nuestro:* ${totalOur.toFixed(2)} €\n`;
+    text += `🔴 *Total ${distName} (${includeIVA ? 'Con IVA' : 'Sin IVA'}):* ${totalComp.toFixed(2)} €\n`;
+    text += `🟢 *Total Nuestro (${includeIVA ? 'Con IVA' : 'Sin IVA'}):* ${totalOur.toFixed(2)} €\n`;
 
     if (savings > 0) {
       text += `🏆 *AHORRO DIRECTO:* +${savings.toFixed(2)} € (${((savings/totalComp)*100).toFixed(1)}%)\n`;
@@ -869,120 +921,36 @@ const ComparatorModule = {
   },
 
   showAddProductModal() {
-    const modal = document.getElementById('product-picker-modal');
-    const list = document.getElementById('modal-picker-list');
-    const search = document.getElementById('modal-picker-search');
-    const closeBtn = document.getElementById('modal-picker-close');
-    const title = document.getElementById('modal-picker-title');
-
-    if (!modal || !list) return;
-
-    if (title) title.textContent = 'Añadir Producto del Catálogo a la Comparativa';
-    modal.style.display = 'flex';
-
-    const clearBtn = document.getElementById('modal-picker-search-clear');
-    if (clearBtn) clearBtn.style.display = 'none';
-
-    if (search) {
-      search.value = '';
-      setTimeout(() => {
-        try {
-          search.focus();
-        } catch(e) {}
-      }, 50);
-    }
-
-    const normalizeText = (str) => {
-      return (str || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[-_]/g, ' ')
-        .trim();
-    };
-
-    const renderList = (query = '') => {
-      const q = normalizeText(query);
-      const filtered = PRODUCTS_DB.filter(p => {
-        if (!q) return true;
-        const normName = normalizeText(p.name);
-        const normFormat = normalizeText(p.format);
-        const normBrand = normalizeText(p.brand || '');
-        const normCategory = normalizeText(p.category || '');
-        return normName.includes(q) || normFormat.includes(q) || normBrand.includes(q) || normCategory.includes(q);
-      });
-
-      if (filtered.length === 0) {
-        list.innerHTML = `
-          <div style="padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-            🔍 No hay productos que coincidan con "<strong>${query}</strong>"
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = filtered.map(p => {
-        const channel = AppState.getActiveChannel();
-        const discount = (p.discounts && p.discounts[channel] !== undefined) ? p.discounts[channel] : (p.discounts?.t3 || 0);
-        const res = PriceEngine.calculateProduct(p, discount);
-
-        return `
-          <div class="modal-product-item" data-id="${p.id}">
-            <div>
-              <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">${p.name}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">${p.format} · ${p.unitsPerBox} uds/caja</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: 800; color: var(--primary);">${PriceEngine.formatCurrency(res.netoCajaSinPV)}</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">Dcto ${discount.toFixed(1)}%</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      list.querySelectorAll('.modal-product-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = item.dataset.id;
-          const found = PRODUCTS_DB.find(p => p.id === id);
-          if (found) {
-            this.addProductToComparison(found);
-            modal.style.display = 'none';
+    ProductPickerHelper.open({
+      title: 'Añadir Producto del Catálogo a la Comparativa',
+      useGlobalOptions: false,
+      getQty: (productId) => {
+        const item = this.items.find(i => !i.isCustom && i.productId === productId);
+        return item ? (item.boxes || 0) : 0;
+      },
+      onAdd: (product) => {
+        this.addProductToComparison(product);
+      },
+      onDecrement: (product) => {
+        const idx = this.items.findIndex(i => !i.isCustom && i.productId === product.id);
+        if (idx !== -1) {
+          if (this.items[idx].boxes > 1) {
+            this.items[idx].boxes -= 1;
+          } else {
+            this.items.splice(idx, 1);
           }
-        });
-      });
-    };
-
-    renderList('');
-
-    const onSearchChange = (e) => {
-      const val = (e && e.target) ? e.target.value : (search ? search.value : '');
-      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
-      renderList(val);
-    };
-
-    if (search) {
-      search.oninput = onSearchChange;
-      search.onkeyup = onSearchChange;
-    }
-
-    if (clearBtn) {
-      clearBtn.onclick = () => {
-        if (search) {
-          search.value = '';
-          search.focus();
+          this.saveToStorage();
+          this.render();
         }
-        clearBtn.style.display = 'none';
-        renderList('');
-      };
-    }
-
-    if (closeBtn) {
-      closeBtn.onclick = () => { modal.style.display = 'none'; };
-    }
-
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.style.display = 'none';
-    };
+      },
+      getSummaryText: () => {
+        const totalBoxes = this.items.reduce((s, i) => s + (i.boxes || 0), 0);
+        return `⚔️ ${totalBoxes} ${totalBoxes === 1 ? 'caja' : 'cajas'} en comparativa`;
+      },
+      onDone: () => {
+        this.render();
+      }
+    });
   },
 
   saveToStorage() {

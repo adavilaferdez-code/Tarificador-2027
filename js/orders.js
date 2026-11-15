@@ -101,12 +101,10 @@ const OrdersModule = {
 
     if (this.btnClear) {
       this.btnClear.addEventListener('click', () => {
-        if (confirm('¿Deseas vaciar todas las líneas del pedido?')) {
-          this.items = [];
-          this.saveToStorage();
-          this.render();
-          AppNotification.show('🗑️ Pedido vaciado');
-        }
+        this.items = [];
+        this.saveToStorage();
+        this.render();
+        AppNotification.show('🗑️ Pedido vaciado');
       });
     }
   },
@@ -130,124 +128,39 @@ const OrdersModule = {
   },
 
   showAddProductModal() {
-    const modal = document.getElementById('product-picker-modal');
-    const list = document.getElementById('modal-picker-list');
-    const search = document.getElementById('modal-picker-search');
-    const closeBtn = document.getElementById('modal-picker-close');
-    const title = document.getElementById('modal-picker-title');
-
-    if (!modal || !list) return;
-
-    if (title) title.textContent = 'Añadir Producto al Pedido';
-    modal.style.display = 'flex';
-
-    const clearBtn = document.getElementById('modal-picker-search-clear');
-    if (clearBtn) clearBtn.style.display = 'none';
-
-    if (search) {
-      search.value = '';
-      setTimeout(() => {
-        try {
-          search.focus();
-        } catch(e) {}
-      }, 50);
-    }
-
-    const normalizeText = (str) => {
-      return (str || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[-_]/g, ' ')
-        .trim();
-    };
-
-    const renderList = (query = '') => {
-      const q = normalizeText(query);
-      const filtered = PRODUCTS_DB.filter(p => {
-        if (!q) return true;
-        const normName = normalizeText(p.name);
-        const normFormat = normalizeText(p.format);
-        const normBrand = normalizeText(p.brand || '');
-        const normCategory = normalizeText(p.category || '');
-        return normName.includes(q) || normFormat.includes(q) || normBrand.includes(q) || normCategory.includes(q);
-      });
-
-      if (filtered.length === 0) {
-        list.innerHTML = `
-          <div style="padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-            🔍 No hay productos que coincidan con "<strong>${query}</strong>"
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = filtered.map(p => {
+    ProductPickerHelper.open({
+      title: 'Añadir Producto al Pedido',
+      useGlobalOptions: true,
+      getQty: (productId) => {
+        return this.items
+          .filter(i => i.productId === productId && !i.bonification)
+          .reduce((sum, i) => sum + (i.boxes || 0), 0);
+      },
+      onAdd: (product) => {
         const channel = AppState.getActiveChannel();
-        const discount = (p.discounts && p.discounts[channel] !== undefined) ? p.discounts[channel] : (p.discounts?.t3 || 0);
-        const options = AppState.getOptions();
-        const res = PriceEngine.calculateProduct(p, discount, options);
-
-        return `
-          <div class="modal-product-item" data-id="${p.id}">
-            <div>
-              <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">${p.name}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">${p.format} · ${p.unitsPerBox} uds/caja</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: 800; color: var(--primary);">${PriceEngine.formatCurrency(res.finalCaja)}</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">${PriceEngine.formatUnitCurrency(res.finalUd)}/ud · Dcto ${discount.toFixed(1)}%</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      list.querySelectorAll('.modal-product-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = item.dataset.id;
-          const found = PRODUCTS_DB.find(p => p.id === id);
-          if (found) {
-            const channel = AppState.getActiveChannel();
-            const discount = (found.discounts && found.discounts[channel] !== undefined) ? found.discounts[channel] : (found.discounts?.t3 || 0);
-            this.addProductToOrder(found, discount, 1);
-            AppNotification.show(`🛒 1 caja de ${found.name} añadida`);
-            modal.style.display = 'none';
+        const discount = (product.discounts && product.discounts[channel] !== undefined) ? product.discounts[channel] : (product.discounts?.t3 || 0);
+        this.addProductToOrder(product, discount, 1);
+      },
+      onDecrement: (product) => {
+        const idx = this.items.findIndex(i => i.productId === product.id && !i.bonification);
+        if (idx !== -1) {
+          if (this.items[idx].boxes > 1) {
+            this.items[idx].boxes -= 1;
+          } else {
+            this.items.splice(idx, 1);
           }
-        });
-      });
-    };
-
-    renderList('');
-
-    const onSearchChange = (e) => {
-      const val = (e && e.target) ? e.target.value : (search ? search.value : '');
-      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
-      renderList(val);
-    };
-
-    if (search) {
-      search.oninput = onSearchChange;
-      search.onkeyup = onSearchChange;
-    }
-
-    if (clearBtn) {
-      clearBtn.onclick = () => {
-        if (search) {
-          search.value = '';
-          search.focus();
+          this.saveToStorage();
+          this.render();
         }
-        clearBtn.style.display = 'none';
-        renderList('');
-      };
-    }
-
-    if (closeBtn) {
-      closeBtn.onclick = () => { modal.style.display = 'none'; };
-    }
-
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.style.display = 'none';
-    };
+      },
+      getSummaryText: () => {
+        const totalBoxes = this.items.reduce((s, i) => s + (i.boxes || 0), 0);
+        return `🛒 ${totalBoxes} ${totalBoxes === 1 ? 'caja' : 'cajas'} en el pedido`;
+      },
+      onDone: () => {
+        this.render();
+      }
+    });
   },
 
   addProductToOrder(product, discountPercent, boxes = 1, bonification = null) {
@@ -295,7 +208,7 @@ const OrdersModule = {
   },
 
   render() {
-    if (!this.container) return;
+    if (!this.container) { this.cacheDOM(); if (!this.container) return; }
     const options = AppState.getOptions();
 
     // Synchronize dedicated proposal IVA buttons
@@ -399,9 +312,9 @@ const OrdersModule = {
               ${bonifBadge}
             </div>
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
-              ${product.format} · Tarifa: ${PriceEngine.formatCurrency(product.tarifaBase)} · Dcto: 
+              ${product.format} · Tarifa: ${PriceEngine.formatCurrency(product.tarifaBase)}<span class="internal-only"> · Dcto: 
               <input type="number" step="0.5" min="0" max="100" class="comp-input" style="width: 55px; padding: 2px 4px; font-size: 0.8rem;" 
-                value="${item.discount.toFixed(1)}" onchange="OrdersModule.updateDiscount(${index}, this.value)">%
+                value="${item.discount.toFixed(1)}" onchange="OrdersModule.updateDiscount(${index}, this.value)">%</span>
             </div>
             <div style="font-size: 0.8rem; color: var(--primary); font-weight: 700; margin-top: 3px;">
               ${PriceEngine.formatCurrency(displayBoxPrice)}/caja (${PriceEngine.formatUnitCurrency(displayUdPrice)}/ud)
@@ -447,6 +360,13 @@ const OrdersModule = {
         this.totalBoxesEl.textContent = `${totalBoxesBilled} cajas`;
       }
     }
+    ['nav-order-badge', 'mobile-nav-order-badge'].forEach(badgeId => {
+      const badge = document.getElementById(badgeId);
+      if (badge) {
+        badge.textContent = totalBoxesBilled;
+        badge.style.display = totalBoxesBilled > 0 ? 'inline-flex' : 'none';
+      }
+    });
     if (this.baseImponibleEl) this.baseImponibleEl.textContent = PriceEngine.formatCurrency(baseImponible);
     if (this.totalPVEl) this.totalPVEl.textContent = PriceEngine.formatCurrency(totalPV);
     if (this.iva10El) this.iva10El.textContent = PriceEngine.formatCurrency(iva10);

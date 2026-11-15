@@ -138,7 +138,7 @@ const MasterTableModule = {
           </td>
           <td style="text-align: center; font-weight: 700;">${p.unitsPerBox}</td>
           <td style="text-align: right; font-weight: 700;">${PriceEngine.formatCurrency(p.tarifaBase)}</td>
-          <td style="text-align: right;">
+          <td class="internal-only" style="text-align: right;">
             <span style="font-weight: 800; color: var(--primary);">${PriceEngine.formatPercent(discount)}</span>
           </td>
           <td style="text-align: right; font-weight: 800; color: var(--text-main);">
